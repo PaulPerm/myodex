@@ -9,14 +9,16 @@ const CATEGORIES = [
   { key: 'machine',     label: 'Machine' },
 ]
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 export default function ExerciseMap() {
-  const [goal]                          = useState('hypertrophy')
-  const [category, setCategory]         = useState('all')
-  const [activeMuscle, setActiveMuscle] = useState(null)
-  const [data, setData]                 = useState(null)
-  const [loading, setLoading]           = useState(false)
-  const [error, setError]               = useState(null)
-  const [view, setView]                 = useState('anterior')
+  const [goal]                                  = useState('hypertrophy')
+  const [category, setCategory]                 = useState('all')
+  const [activeMuscle, setActiveMuscle]         = useState(null)
+  const [data, setData]                         = useState(null)
+  const [loading, setLoading]                   = useState(false)
+  const [error, setError]                       = useState(null)
+  const [view, setView]                         = useState('anterior')
   const [selectedExercise, setSelectedExercise] = useState(null)
 
   async function handleMuscleClick(muscleData, currentGoal = goal, currentCategory = category) {
@@ -32,7 +34,7 @@ export default function ExerciseMap() {
     setData(null)
 
     try {
-      const url = `http://localhost:8000/muscles/${muscle}/exercises?goal=${currentGoal}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`
+      const url = `${API_URL}/muscles/${muscle}/exercises?goal=${currentGoal}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`
       const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch')
       const json = await res.json()
