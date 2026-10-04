@@ -9,3 +9,7 @@ export function normalizeMuscle(raw) {
 export function formatMuscle(slug) {
   return slug.replaceAll('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
+
+export function toMapMuscles(slugs) {
+  return slugs.flatMap(s => (s === 'trapezius' ? ['trapezius', 'neck'] : [s]))
+}

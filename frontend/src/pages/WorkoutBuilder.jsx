@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
 import { normalizeMuscle, formatMuscle } from '../utils/muscles'
+import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -64,7 +65,7 @@ export default function WorkoutBuilder() {
     }
   }
 
-  const mapData = selected.length ? [{ name: 'Selected', muscles: selected }] : []
+  const mapData = selected.length ? [{ name: 'Selected', muscles: toMapMuscles(selected) }] : []
 
   return (
     <div className="flex flex-col min-h-screen">

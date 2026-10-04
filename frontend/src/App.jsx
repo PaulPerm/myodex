@@ -13,7 +13,7 @@ export default function App() {
   const [page, setPage] = useState('map')
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] text-[#e8e0d0]">
+    <div className="min-h-screen text-[#e8e0d0]">
 
       <header className="flex items-center justify-between px-8 h-16 border-b border-white/10 bg-black/60 backdrop-blur-sm">
 

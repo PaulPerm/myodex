@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
-import { normalizeMuscle, formatMuscle } from '../utils/muscles'
+import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
 
 const CATEGORIES = [
   { key: 'all',         label: 'All' },
@@ -12,6 +12,7 @@ const CATEGORIES = [
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+  
 export default function ExerciseMap() {
   const [goal]                                  = useState('hypertrophy')
   const [category, setCategory]                 = useState('all')
@@ -21,7 +22,7 @@ export default function ExerciseMap() {
   const [error, setError]                       = useState(null)
   const [view, setView]                         = useState('anterior')
   const [selectedExercise, setSelectedExercise] = useState(null)
-
+      
   async function handleMuscleClick(muscleData, currentGoal = goal, currentCategory = category) {
     const muscle = normalizeMuscle(muscleData.muscle)
     if (!muscle) return
@@ -52,8 +53,8 @@ export default function ExerciseMap() {
   const muscleLabel = activeMuscle ? formatMuscle(activeMuscle) : null
 
   const mapData = selectedExercise
-    ? [{ name: selectedExercise.name, muscles: [selectedExercise.target, ...selectedExercise.secondary] }]
-    : data ? [{ name: muscleLabel, muscles: [activeMuscle] }] : []
+    ? [{ name: selectedExercise.name, muscles: toMapMuscles([selectedExercise.target, ...selectedExercise.secondary]) }]
+    : data ? [{ name: muscleLabel, muscles: toMapMuscles([activeMuscle]) }] : []
 
   return (
     <div className="flex flex-col min-h-screen">
