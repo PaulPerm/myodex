@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
+import { normalizeMuscle, formatMuscle } from '../utils/muscles'
 
 const CATEGORIES = [
   { key: 'all',         label: 'All' },
@@ -22,10 +23,8 @@ export default function ExerciseMap() {
   const [selectedExercise, setSelectedExercise] = useState(null)
 
   async function handleMuscleClick(muscleData, currentGoal = goal, currentCategory = category) {
-    const IGNORED = ['head', 'knees']
-    if (IGNORED.includes(muscleData.muscle)) return
-
-    const muscle = muscleData.muscle === 'neck' ? 'trapezius' : muscleData.muscle
+    const muscle = normalizeMuscle(muscleData.muscle)
+    if (!muscle) return
 
     setSelectedExercise(null)
     setActiveMuscle(muscle)
@@ -39,7 +38,7 @@ export default function ExerciseMap() {
       if (!res.ok) throw new Error('Failed to fetch')
       const json = await res.json()
       setData(json)
-    } catch (e) {
+    } catch {
       setError('Could not load exercises. Is the backend running?')
     } finally {
       setLoading(false)
@@ -50,9 +49,7 @@ export default function ExerciseMap() {
     setSelectedExercise(exercise)
   }
 
-  const muscleLabel = activeMuscle
-    ? activeMuscle.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
-    : null
+  const muscleLabel = activeMuscle ? formatMuscle(activeMuscle) : null
 
   const mapData = selectedExercise
     ? [{ name: selectedExercise.name, muscles: [selectedExercise.target, ...selectedExercise.secondary] }]
@@ -80,8 +77,6 @@ export default function ExerciseMap() {
               view={view}
               setView={setView}
               data={mapData}
-              activeMuscle={activeMuscle}
-              muscleLabel={muscleLabel}
               handleMuscleClick={handleMuscleClick}
             />
 
@@ -98,7 +93,7 @@ export default function ExerciseMap() {
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-3">Target</p>
                     <p className="text-sm font-bold uppercase tracking-wide text-white">
-                      {selectedExercise.target.replace('-', ' ')}
+                      {formatMuscle(selectedExercise.target)}
                     </p>
                   </div>
                   <div className="h-px bg-white/10" />
@@ -107,7 +102,7 @@ export default function ExerciseMap() {
                     <div className="flex flex-col gap-2">
                       {selectedExercise.secondary.map(muscle => (
                         <p key={muscle} className="text-xs uppercase tracking-widest text-white/40">
-                          {muscle.replace('-', ' ')}
+                          {formatMuscle(muscle)}
                         </p>
                       ))}
                     </div>
@@ -128,7 +123,7 @@ export default function ExerciseMap() {
                         .filter((v, i, a) => a.indexOf(v) === i)
                         .map(muscle => (
                           <p key={muscle} className="text-xs uppercase tracking-widest text-white/40">
-                            {muscle.replace('-', ' ')}
+                            {formatMuscle(muscle)}
                           </p>
                         ))}
                     </div>
