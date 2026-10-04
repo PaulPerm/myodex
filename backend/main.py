@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import random
 from typing import List
@@ -208,6 +208,18 @@ def generate_workout(req: WorkoutRequest):
 
     return {"goal": req.goal, "preset": preset, "blocks": blocks}
 
+class SwapRequest(BaseModel):
+    muscle: str
+    exclude: List[str] = []  # names already in the workout, incl. the one being swapped
+    categories: List[str] = []
+
+
+@app.post("/workouts/swap")
+def swap_exercise(req: SwapRequest):
+    pool = filter_pool(req.muscle, req.categories, set(req.exclude))
+    if not pool:
+        raise HTTPException(status_code=404, detail="No alternative exercises available")
+    return random.choice(pool)
 
 @app.get("/")
 def root():

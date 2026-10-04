@@ -49,3 +49,28 @@ def test_empty_muscles_rejected():
 def test_too_many_per_muscle_rejected():
     assert gen(muscles=["chest"], exercises_per_muscle=10).status_code == 422
     
+def swap(**body):
+    return client.post("/workouts/swap", json=body)
+
+
+def test_swap_returns_target_muscle():
+    ex = swap(muscle="chest").json()
+    assert ex["target"] == "chest"
+
+
+def test_swap_respects_exclude():
+    excluded = ["Barbell Bench Press", "Push Up", "Dumbbell Fly"]
+    for _ in range(20):
+        assert swap(muscle="chest", exclude=excluded).json()["name"] not in excluded
+
+
+def test_swap_respects_category():
+    ex = swap(muscle="chest", categories=["machine"]).json()
+    assert ex["category"] == "machine"
+
+
+def test_swap_404_when_exhausted():
+    machines = ["Cable Crossover", "Chest Press Machine", "Pec Deck Machine"]
+    res = swap(muscle="chest", categories=["machine"], exclude=machines)
+    assert res.status_code == 404
+
