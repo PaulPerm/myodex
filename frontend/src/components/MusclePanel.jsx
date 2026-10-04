@@ -1,12 +1,11 @@
 import Model from "react-body-highlighter";
 
-export default function MusclePanel({ view, setView, data, activeMuscle, muscleLabel, handleMuscleClick }) 
-{
-    return(
+export default function MusclePanel({ view, setView, data, handleMuscleClick, hint = "Click a muscle to see exercises" }) {
+    return (
         <div className="flex flex-col items-center gap-4">
             <div>
                 <p className="text-xs uppercase tracking-widest text-[#333] font-bold">
-                    Click a muscle to see an exercise
+                    {hint}
                 </p>
 
                 {/* toggle */}
@@ -31,8 +30,6 @@ export default function MusclePanel({ view, setView, data, activeMuscle, muscleL
                     style={{ width: '100%' }}
                 />
             </div>
-            
-
         </div>
     )
 }
