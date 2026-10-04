@@ -38,7 +38,7 @@ export default function ExerciseMap() {
       if (!res.ok) throw new Error('Failed to fetch')
       const json = await res.json()
       setData(json)
-    } catch (e) {
+    } catch {
       setError('Could not load exercises. Is the backend running?')
     } finally {
       setLoading(false)
