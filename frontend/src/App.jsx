@@ -15,7 +15,7 @@ export default function App() {
   return (
     <div className="min-h-screen text-[#e8e0d0]">
 
-      <header className="flex items-center justify-between px-8 h-16 border-b border-white/10 bg-black/60 backdrop-blur-md">
+      <header className="flex items-center justify-between px-8 h-16 border-b border-white/10 bg-black/80 backdrop-blur-md">
 
         {/* Logo */}
         <h1

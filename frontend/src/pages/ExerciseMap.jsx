@@ -61,7 +61,7 @@ export default function ExerciseMap() {
       <div className="flex gap-6 p-6 flex-1">
 
         {/* Left card — Anatomical Target Map */}
-        <div className="flex flex-col gap-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm p-6 w-[700px] shrink-0">
+        <div className="flex flex-col gap-4 bg-black/80 backdrop-blur-md border border-white/10 rounded-sm p-6 w-[700px] shrink-0">
 
           <div>
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
@@ -136,7 +136,7 @@ export default function ExerciseMap() {
         </div>
 
         {/* Right card — Exercises */}
-        <div className="flex flex-col flex-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm p-6">
+        <div className="flex flex-col flex-1 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
 
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>

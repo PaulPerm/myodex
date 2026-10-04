@@ -71,7 +71,7 @@ export default function WorkoutBuilder() {
       <div className="flex gap-6 p-6 flex-1">
 
         {/* Left card — muscle selection */}
-        <div className="flex flex-col gap-4 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm p-6 w-[700px] shrink-0">
+        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6 w-[700px] shrink-0">
           <div>
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
               Select Targets
@@ -119,7 +119,7 @@ export default function WorkoutBuilder() {
         </div>
 
         {/* Right card — options + results */}
-        <div className="flex flex-col flex-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm p-6">
+        <div className="flex flex-col flex-1 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
           <h2 className="text-xl font-bold uppercase tracking-widest text-white mb-4" style={{ fontFamily: 'Bebas Neue' }}>
             Workout Builder
           </h2>
