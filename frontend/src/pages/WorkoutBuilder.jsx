@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
-import { normalizeMuscle, formatMuscle } from '../utils/muscles'
 import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
