@@ -4,15 +4,22 @@
 
 **Live demo:** https://myodex.vercel.app
 
-An interactive muscle map for exploring exercises. Click a muscle on the front or back view to see ranked exercises (primary and secondary), search and filter by category, and view sets/reps/rest presets for strength, hypertrophy, or endurance goals.
+An interactive muscle map for exploring exercises and building workouts. Click a muscle on the front or back view to see ranked exercises, or select multiple muscles to generate a full workout tailored to your goal and equipment.
 
 ## Features
 
+**Exercise Map**
 - Clickable front/back body map covering 17 muscle groups
 - 112 exercises, each with a target muscle, secondary muscles, difficulty, and category
 - Search and category filters (Bodyweight, Free Weight, Machine)
-- Goal presets: Strength, Hypertrophy, Endurance
 - Recruitment index showing primary and secondary muscles
+
+**Workout Builder**
+- Multi-select muscles directly on the body map
+- Goal presets: Strength, Hypertrophy, Endurance (sets, reps, rest)
+- Filter by equipment and choose exercises per muscle
+- Compound movements ordered first
+- Regenerate the whole workout or swap individual exercises
 
 ## Tech Stack
 
@@ -47,13 +54,16 @@ docker compose exec backend pytest -v
 | `GET /muscles/{slug}/exercises?goal=&category=` | Primary and secondary exercises for a muscle |
 | `GET /exercises?category=&difficulty=` | All exercises, filterable |
 | `GET /goals` | Sets/reps/rest presets |
+| `POST /workouts/generate` | Generate a workout from muscles, goal, equipment, and count |
+| `POST /workouts/swap` | Get a replacement exercise, excluding ones already used |
 
 ## Roadmap
 
 - [x] Exercise Map: browse muscles and see exercises
 - [x] Deployment (Vercel + Railway)
 - [x] Backend tests + CI
+- [x] Workout Builder: generate workouts by muscle, goal, and equipment
+- [ ] Mobile layout
 - [ ] PostgreSQL connected and seeded
 - [ ] User accounts and saved workouts
-- [ ] Workout Builder: generate workouts by muscle, goal, and equipment
 - [ ] Workout Log: PRs, progress graphs, weekly muscle heatmap

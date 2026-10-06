@@ -35,6 +35,8 @@ export default function WorkoutBuilder() {
   const [workout, setWorkout]       = useState(null)
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
+  const [swapping, setSwapping]     = useState(null)
+  const [swapMsg, setSwapMsg]       = useState(null)
 
   function toggleMuscle(muscleData) {
     const slug = normalizeMuscle(muscleData.muscle)
@@ -49,6 +51,7 @@ export default function WorkoutBuilder() {
   async function generate() {
     setLoading(true)
     setError(null)
+    setSwapMsg(null)
     try {
       const res = await fetch(`${API_URL}/workouts/generate`, {
         method: 'POST',
@@ -61,6 +64,36 @@ export default function WorkoutBuilder() {
       setError('Could not generate workout. Is the backend running?')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function swapExercise(blockIdx, exIdx) {
+    const key = `${blockIdx}-${exIdx}`
+    const exclude = workout.blocks.flatMap(b => b.exercises.map(e => e.name))
+    setSwapping(key)
+    setSwapMsg(null)
+    try {
+      const res = await fetch(`${API_URL}/workouts/swap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ muscle: workout.blocks[blockIdx].muscle, exclude, categories }),
+      })
+      if (res.status === 404) {
+        setSwapMsg({ key, text: 'No alternatives with these filters' })
+        return
+      }
+      if (!res.ok) throw new Error()
+      const replacement = await res.json()
+      setWorkout(prev => ({
+        ...prev,
+        blocks: prev.blocks.map((b, i) =>
+          i !== blockIdx ? b : { ...b, exercises: b.exercises.map((e, j) => (j === exIdx ? replacement : e)) }
+        ),
+      }))
+    } catch {
+      setSwapMsg({ key, text: 'Swap failed' })
+    } finally {
+      setSwapping(null)
     }
   }
 
@@ -180,7 +213,7 @@ export default function WorkoutBuilder() {
                   <span><span className="text-[#c0392b] font-bold">{workout.preset.rest}</span> rest</span>
                 </div>
 
-                {workout.blocks.map(block => (
+                {workout.blocks.map((block, i) => (
                   <div key={block.muscle} className="mb-6">
                     <h3 className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-3">
                       {formatMuscle(block.muscle)}
@@ -189,9 +222,29 @@ export default function WorkoutBuilder() {
                       <p className="text-xs uppercase tracking-widest text-white/20">No exercises match these filters</p>
                     ) : (
                       <>
-                        {block.exercises.map(ex => (
-                          <ExerciseCard key={ex.id} exercise={ex} onClick={() => {}} />
-                        ))}
+                        {block.exercises.map((ex, j) => {
+                          const key = `${i}-${j}`
+                          return (
+                            <div key={ex.id}>
+                              <div className="flex items-stretch gap-2">
+                                <div className="flex-1">
+                                  <ExerciseCard exercise={ex} onClick={() => {}} />
+                                </div>
+                                <button
+                                  onClick={() => swapExercise(i, j)}
+                                  disabled={swapping === key}
+                                  title="Swap exercise"
+                                  className="px-3 text-sm text-white/40 border border-white/10 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-30"
+                                >
+                                  {swapping === key ? '…' : '⇄'}
+                                </button>
+                              </div>
+                              {swapMsg?.key === key && (
+                                <p className="text-[10px] uppercase tracking-widest text-[#c0392b] mt-1 mb-2">{swapMsg.text}</p>
+                              )}
+                            </div>
+                          )
+                        })}
                         {block.exercises.length < perMuscle && (
                           <p className="text-[10px] uppercase tracking-widest text-white/30 mt-2">
                             Only {block.exercises.length} available with these filters
