@@ -12,7 +12,6 @@ const CATEGORIES = [
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-  
 export default function ExerciseMap() {
   const [goal]                                  = useState('hypertrophy')
   const [category, setCategory]                 = useState('all')
@@ -22,7 +21,7 @@ export default function ExerciseMap() {
   const [error, setError]                       = useState(null)
   const [view, setView]                         = useState('anterior')
   const [selectedExercise, setSelectedExercise] = useState(null)
-      
+
   async function handleMuscleClick(muscleData, currentGoal = goal, currentCategory = category) {
     const muscle = normalizeMuscle(muscleData.muscle)
     if (!muscle) return
@@ -61,7 +60,7 @@ export default function ExerciseMap() {
       <div className="flex gap-6 p-6 flex-1">
 
         {/* Left card — Anatomical Target Map */}
-        <div className="flex flex-col gap-4 bg-black/80 backdrop-blur-md border border-white/10 rounded-sm p-6 w-[700px] shrink-0">
+        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6 flex-1 min-w-0">
 
           <div>
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
@@ -136,7 +135,7 @@ export default function ExerciseMap() {
         </div>
 
         {/* Right card — Exercises */}
-        <div className="flex flex-col flex-1 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
+        <div className="flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
 
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
@@ -152,7 +151,7 @@ export default function ExerciseMap() {
             <input
               type="text"
               placeholder="Search exercises..."
-              className="flex-1 bg-white/5 border border-white/10 px-4 py-2 text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
+              className="flex-1 min-w-0 bg-white/5 border border-white/10 px-4 py-2 text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
             />
             <button
               onClick={() => {

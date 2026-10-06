@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
 import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
+import { Shuffle, Loader2 } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -104,7 +105,7 @@ export default function WorkoutBuilder() {
       <div className="flex gap-6 p-6 flex-1">
 
         {/* Left card — muscle selection */}
-        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6 w-[700px] shrink-0">
+        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6 flex-1 min-w-0">
           <div>
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
               Select Targets
@@ -152,7 +153,7 @@ export default function WorkoutBuilder() {
         </div>
 
         {/* Right card — options + results */}
-        <div className="flex flex-col flex-1 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
+        <div className="flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
           <h2 className="text-xl font-bold uppercase tracking-widest text-white mb-4" style={{ fontFamily: 'Bebas Neue' }}>
             Workout Builder
           </h2>
@@ -230,13 +231,16 @@ export default function WorkoutBuilder() {
                                 <div className="flex-1">
                                   <ExerciseCard exercise={ex} onClick={() => {}} />
                                 </div>
-                                <button
+                                                                <button
                                   onClick={() => swapExercise(i, j)}
                                   disabled={swapping === key}
-                                  title="Swap exercise"
-                                  className="px-3 text-sm text-white/40 border border-white/10 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-30"
+                                  title="Shuffle exercise"
+                                  aria-label="Shuffle exercise"
+                                  className="flex items-center justify-center px-3 mb-2 text-white/40 border border-white/10 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-30"
                                 >
-                                  {swapping === key ? '…' : '⇄'}
+                                  {swapping === key
+                                    ? <Loader2 size={16} className="animate-spin" />
+                                    : <Shuffle size={16} />}
                                 </button>
                               </div>
                               {swapMsg?.key === key && (
