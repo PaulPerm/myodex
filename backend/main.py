@@ -4,9 +4,18 @@ import random
 from typing import List
 from pydantic import BaseModel, Field
 from seed_data import GOAL_PRESETS as goal_presets, EXERCISES as exercises, MUSCLES
+from contextlib import asynccontextmanager
+from seed import seed_if_empty
 
 
-app = FastAPI()
+# app = FastAPI()
+@asynccontextmanager
+async def lifespan(app):
+    seed_if_empty()  # runs once on startup
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
 
 app.add_middleware(
     CORSMiddleware,
