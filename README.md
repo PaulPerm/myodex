@@ -19,14 +19,14 @@ An interactive muscle map for exploring exercises and building workouts. Click a
 - Goal presets: Strength, Hypertrophy, Endurance (sets, reps, rest)
 - Filter by equipment and choose exercises per muscle
 - Compound movements ordered first
-- Regenerate the whole workout or swap individual exercises
+- Regenerate the whole workout or shuffle individual exercises
 
 ## Tech Stack
 
-- **Frontend:** React (Vite), Tailwind CSS, react-body-highlighter
+- **Frontend:** React (Vite), Tailwind CSS, react-body-highlighter, lucide-react
 - **Backend:** FastAPI (Python 3.11)
-- **Database:** PostgreSQL (in progress, exercise data is currently served in-memory)
-- **Infra:** Docker Compose, GitHub Actions CI, Vercel (frontend), Railway (backend)
+- **Database:** PostgreSQL with SQLAlchemy 2.0 and Alembic migrations
+- **Infra:** Docker Compose, GitHub Actions CI, Vercel (frontend), Railway (backend + database)
 
 ## Running Locally
 
@@ -35,6 +35,8 @@ Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 ```bash
 docker compose up -d --build
 ```
+
+On startup, the backend applies any pending migrations and seeds the database if it's empty.
 
 - Frontend: http://localhost:5173
 - API: http://localhost:8000
@@ -45,6 +47,8 @@ docker compose up -d --build
 ```bash
 docker compose exec backend pytest -v
 ```
+
+CI runs the backend tests against a fresh Postgres instance and builds the frontend on every push.
 
 ## API
 
@@ -63,7 +67,7 @@ docker compose exec backend pytest -v
 - [x] Deployment (Vercel + Railway)
 - [x] Backend tests + CI
 - [x] Workout Builder: generate workouts by muscle, goal, and equipment
-- [ ] Mobile layout
-- [ ] PostgreSQL connected and seeded
+- [x] PostgreSQL connected and seeded
 - [ ] User accounts and saved workouts
 - [ ] Workout Log: PRs, progress graphs, weekly muscle heatmap
+- [ ] Mobile layout
