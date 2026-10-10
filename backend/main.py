@@ -1,21 +1,24 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import random
 from typing import List
+
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from seed_data import GOAL_PRESETS as goal_presets, EXERCISES as exercises, MUSCLES
-from contextlib import asynccontextmanager
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from db import get_db
+from models import Muscle, Exercise, GoalPreset
 from seed import seed_if_empty
 
 
-# app = FastAPI()
 @asynccontextmanager
 async def lifespan(app):
     seed_if_empty()  # runs once on startup
     yield
 
 app = FastAPI(lifespan=lifespan)
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,12 +29,49 @@ app.add_middleware(
 )
 
 
-def get_exercises_for_muscle(muscle_name: str):
-    muscle = muscle_name.lower()
-    primary = [e for e in exercises if e["target"] == muscle]
-    secondary = [e for e in exercises if muscle in e["secondary"]]
-    return primary, secondary
+# ── Helpers ─────────────────────────────────────────────────────────────
 
+def exercise_dict(e: Exercise):
+    return {
+        "id": e.id,
+        "name": e.name,
+        "difficulty": e.difficulty,
+        "category": e.category,
+        "target": e.target,
+        "secondary": list(e.secondary),
+    }
+
+
+def preset_dict(p: GoalPreset):
+    return {"sets": p.sets, "reps": p.reps, "rest": p.rest}
+
+
+def get_preset(db: Session, goal: str):
+    preset = db.get(GoalPreset, goal) or db.get(GoalPreset, "hypertrophy")
+    return preset_dict(preset)
+
+
+def get_exercises_for_muscle(db: Session, muscle_name: str):
+    muscle = muscle_name.lower()
+    primary = db.scalars(
+        select(Exercise).where(Exercise.target == muscle).order_by(Exercise.id)
+    ).all()
+    secondary = db.scalars(
+        select(Exercise).where(Exercise.secondary.any(muscle)).order_by(Exercise.id)
+    ).all()
+    return [exercise_dict(e) for e in primary], [exercise_dict(e) for e in secondary]
+
+
+def filter_pool(db: Session, muscle: str, categories: List[str], exclude: set):
+    primary, _ = get_exercises_for_muscle(db, muscle)
+    return [
+        e for e in primary
+        if (not categories or e["category"] in categories)
+        and e["name"] not in exclude
+    ]
+
+
+# ── Workouts ────────────────────────────────────────────────────────────
 
 class WorkoutRequest(BaseModel):
     muscles: List[str] = Field(min_length=1)
@@ -40,23 +80,14 @@ class WorkoutRequest(BaseModel):
     exercises_per_muscle: int = Field(default=2, ge=1, le=5)
 
 
-def filter_pool(muscle: str, categories: List[str], exclude: set):
-    primary, _ = get_exercises_for_muscle(muscle)
-    return [
-        e for e in primary
-        if (not categories or e["category"] in categories)
-        and e["name"] not in exclude
-    ]
-
-
 @app.post("/workouts/generate")
-def generate_workout(req: WorkoutRequest):
-    preset = goal_presets.get(req.goal, goal_presets["hypertrophy"])
+def generate_workout(req: WorkoutRequest, db: Session = Depends(get_db)):
+    preset = get_preset(db, req.goal)
     used = set()
     blocks = []
 
     for muscle in req.muscles:
-        pool = filter_pool(muscle, req.categories, used)
+        pool = filter_pool(db, muscle, req.categories, used)
         picks = random.sample(pool, min(req.exercises_per_muscle, len(pool)))
         picks.sort(key=lambda e: len(e["secondary"]), reverse=True)  # compounds first
         used.update(e["name"] for e in picks)
@@ -72,12 +103,14 @@ class SwapRequest(BaseModel):
 
 
 @app.post("/workouts/swap")
-def swap_exercise(req: SwapRequest):
-    pool = filter_pool(req.muscle, req.categories, set(req.exclude))
+def swap_exercise(req: SwapRequest, db: Session = Depends(get_db)):
+    pool = filter_pool(db, req.muscle, req.categories, set(req.exclude))
     if not pool:
         raise HTTPException(status_code=404, detail="No alternative exercises available")
     return random.choice(pool)
 
+
+# ── Read endpoints ──────────────────────────────────────────────────────
 
 @app.get("/")
 def root():
@@ -85,39 +118,47 @@ def root():
 
 
 @app.get("/goals")
-def get_goals():
-    return goal_presets
+def get_goals(db: Session = Depends(get_db)):
+    return {p.key: preset_dict(p) for p in db.scalars(select(GoalPreset))}
 
 
 @app.get("/muscles")
-def get_muscles():
-    return MUSCLES
+def get_muscles(db: Session = Depends(get_db)):
+    muscles = db.scalars(select(Muscle).order_by(Muscle.id))
+    return [{"id": m.id, "slug": m.slug, "name": m.name} for m in muscles]
 
 
 @app.get("/muscles/{muscle_name}/exercises")
-def get_exercises_by_muscle(muscle_name: str, goal: str = "hypertrophy", category: str = None):
-    primary, secondary = get_exercises_for_muscle(muscle_name)
+def get_exercises_by_muscle(
+    muscle_name: str,
+    goal: str = "hypertrophy",
+    category: str | None = None,
+    db: Session = Depends(get_db),
+):
+    primary, secondary = get_exercises_for_muscle(db, muscle_name)
 
     if category:
         primary = [e for e in primary if e["category"] == category]
         secondary = [e for e in secondary if e["category"] == category]
 
-    preset = goal_presets.get(goal, goal_presets["hypertrophy"])
-
     return {
         "muscle": muscle_name,
         "goal": goal,
-        "preset": preset,
+        "preset": get_preset(db, goal),
         "primary": primary,
         "secondary": secondary,
     }
 
 
 @app.get("/exercises")
-def get_all_exercises(category: str = None, difficulty: str = None):
-    result = exercises
+def get_all_exercises(
+    category: str | None = None,
+    difficulty: str | None = None,
+    db: Session = Depends(get_db),
+):
+    query = select(Exercise).order_by(Exercise.id)
     if category:
-        result = [e for e in result if e["category"] == category]
+        query = query.where(Exercise.category == category)
     if difficulty:
-        result = [e for e in result if e["difficulty"] == difficulty]
-    return result
+        query = query.where(Exercise.difficulty == difficulty)
+    return [exercise_dict(e) for e in db.scalars(query)]

@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
-from main import app, exercises, goal_presets
+from main import app
+from seed_data import EXERCISES as exercises, GOAL_PRESETS as goal_presets
 
 client = TestClient(app)
 VALID_SLUGS = {m["slug"] for m in client.get("/muscles").json()}
