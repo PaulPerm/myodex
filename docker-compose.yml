@@ -18,7 +18,9 @@ services:
     environment:
       - DATABASE_URL=postgresql://myodex:myodex@db:5432/myodex
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      
 
   db:
     image: postgres:15
@@ -30,6 +32,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myodex"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      
 
 volumes:
   postgres_data:

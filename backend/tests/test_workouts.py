@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
-from main import app, goal_presets
+from main import app
+from seed_data import GOAL_PRESETS as goal_presets
 
 client = TestClient(app)
 
