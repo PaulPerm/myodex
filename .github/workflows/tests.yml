@@ -11,6 +11,24 @@ jobs:
       run:
         working-directory: backend
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: myodex
+          POSTGRES_PASSWORD: myodex
+          POSTGRES_DB: myodex
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U myodex"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://myodex:myodex@localhost:5432/myodex
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,9 +42,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests
-  
         run: pytest -v
-  
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
