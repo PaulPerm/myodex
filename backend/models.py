@@ -1,7 +1,8 @@
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, DateTime, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from db import Base
+from datetime import datetime
 
 class Muscle(Base):
     __tablename__ = "muscles"
@@ -28,5 +29,13 @@ class GoalPreset(Base):
     reps: Mapped[str] = mapped_column(String(20))
     rest: Mapped[str] = mapped_column(String(20))
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -5,3 +5,8 @@ sqlalchemy
 alembic
 pytest
 httpx
+bcrypt
+pyjwt
+pydantic[email]
+python-multipart
+

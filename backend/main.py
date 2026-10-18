@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from db import get_db
 from models import Muscle, Exercise, GoalPreset
 from seed import seed_if_empty
+from auth import router as auth_router
 
 
 @asynccontextmanager
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 
 # ── Helpers ─────────────────────────────────────────────────────────────
 
