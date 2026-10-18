@@ -3,6 +3,8 @@ import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
 import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
 import { Shuffle, Loader2 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../api'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -28,6 +30,7 @@ const chip = active =>
 const label = 'text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2'
 
 export default function WorkoutBuilder() {
+  const { user } = useAuth()
   const [view, setView]             = useState('anterior')
   const [selected, setSelected]     = useState([])
   const [goal, setGoal]             = useState('hypertrophy')
@@ -38,6 +41,9 @@ export default function WorkoutBuilder() {
   const [error, setError]           = useState(null)
   const [swapping, setSwapping]     = useState(null)
   const [swapMsg, setSwapMsg]       = useState(null)
+  const [workoutName, setWorkoutName] = useState('')
+  const [saving, setSaving]         = useState(false)
+  const [saveMsg, setSaveMsg]       = useState(null)
 
   function toggleMuscle(muscleData) {
     const slug = normalizeMuscle(muscleData.muscle)
@@ -53,6 +59,7 @@ export default function WorkoutBuilder() {
     setLoading(true)
     setError(null)
     setSwapMsg(null)
+    setSaveMsg(null)
     try {
       const res = await fetch(`${API_URL}/workouts/generate`, {
         method: 'POST',
@@ -73,6 +80,7 @@ export default function WorkoutBuilder() {
     const exclude = workout.blocks.flatMap(b => b.exercises.map(e => e.name))
     setSwapping(key)
     setSwapMsg(null)
+    setSaveMsg(null)
     try {
       const res = await fetch(`${API_URL}/workouts/swap`, {
         method: 'POST',
@@ -95,6 +103,29 @@ export default function WorkoutBuilder() {
       setSwapMsg({ key, text: 'Swap failed' })
     } finally {
       setSwapping(null)
+    }
+  }
+
+  async function saveWorkout() {
+    setSaving(true)
+    setSaveMsg(null)
+    try {
+      await apiFetch('/saved-workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: workoutName.trim(),
+          goal: workout.goal,
+          preset: workout.preset,
+          blocks: workout.blocks,
+        }),
+      })
+      setSaveMsg({ ok: true, text: 'Saved' })
+      setWorkoutName('')
+    } catch (err) {
+      setSaveMsg({ ok: false, text: err.message })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -208,6 +239,37 @@ export default function WorkoutBuilder() {
 
             {workout && (
               <>
+                {/* Save */}
+                {user ? (
+                  <div className="mb-4">
+                    <div className="flex gap-2">
+                      <input
+                        value={workoutName}
+                        onChange={e => setWorkoutName(e.target.value)}
+                        placeholder="Name this workout..."
+                        maxLength={100}
+                        className="flex-1 min-w-0 bg-white/5 border border-white/10 px-4 py-2 text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
+                      />
+                      <button
+                        onClick={saveWorkout}
+                        disabled={!workoutName.trim() || saving}
+                        className="uppercase tracking-widest text-xs font-bold px-4 py-2 border border-[#c0392b]/40 text-[#c0392b] hover:bg-[#c0392b]/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                    {saveMsg && (
+                      <p className={`text-[10px] uppercase tracking-widest mt-2 ${saveMsg.ok ? 'text-white/50' : 'text-[#c0392b]'}`}>
+                        {saveMsg.text}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[10px] uppercase tracking-widest text-white/30 mb-4">
+                    Sign in to save workouts
+                  </p>
+                )}
+
                 <div className="flex gap-6 border border-white/10 px-4 py-3 mb-6 text-xs uppercase tracking-widest text-white/60">
                   <span><span className="text-[#c0392b] font-bold">{workout.preset.sets}</span> sets</span>
                   <span><span className="text-[#c0392b] font-bold">{workout.preset.reps}</span> reps</span>
@@ -231,7 +293,7 @@ export default function WorkoutBuilder() {
                                 <div className="flex-1">
                                   <ExerciseCard exercise={ex} onClick={() => {}} />
                                 </div>
-                                                                <button
+                                <button
                                   onClick={() => swapExercise(i, j)}
                                   disabled={swapping === key}
                                   title="Shuffle exercise"
