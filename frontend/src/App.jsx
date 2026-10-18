@@ -4,11 +4,13 @@ import WorkoutBuilder from './pages/WorkoutBuilder'
 import WorkoutLog from './pages/WorkoutLog'
 import { useAuth } from './context/AuthContext'
 import AuthModal from './components/AuthModal'
+import MyWorkouts from './pages/MyWorkouts'
 
 const PAGES = [
   { key: 'map',     label: 'Exercise Map' },
   { key: 'builder', label: 'Workout Builder' },
   { key: 'log',     label: 'Workout Log' },
+  { key: 'saved',   label: 'My Workouts'},
 ]
 
 export default function App() {
@@ -80,6 +82,7 @@ export default function App() {
         {page === 'map' && <ExerciseMap />}
         {page === 'builder' && <WorkoutBuilder />}
         {page === 'log' && <WorkoutLog />}
+        {page === 'saved' && <MyWorkouts />}
       </div>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
