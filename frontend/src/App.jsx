@@ -2,6 +2,8 @@ import { useState } from 'react'
 import ExerciseMap from './pages/ExerciseMap'
 import WorkoutBuilder from './pages/WorkoutBuilder'
 import WorkoutLog from './pages/WorkoutLog'
+import { useAuth } from './context/AuthContext'
+import AuthModal from './components/AuthModal'
 
 const PAGES = [
   { key: 'map',     label: 'Exercise Map' },
@@ -11,6 +13,8 @@ const PAGES = [
 
 export default function App() {
   const [page, setPage] = useState('map')
+  const { user, logout } = useAuth()
+  const [showAuth, setShowAuth] = useState(false)
 
   return (
     <div className="min-h-screen text-[#e8e0d0]">
@@ -43,15 +47,31 @@ export default function App() {
         </nav>
 
         {/* User profile */}
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs font-bold uppercase tracking-widest text-white">Username</p>
-            <p className="text-[10px] uppercase tracking-widest text-[#c0392b]">Pro Member</p>
+        {user ? (
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs font-bold uppercase tracking-widest text-white">{user.username}</p>
+              <button
+                onClick={logout}
+                className="text-[10px] uppercase tracking-widest text-[#c0392b] hover:text-white"
+              >
+                Log out
+              </button>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-[#1c1a18] border border-[#c0392b]/40 flex items-center justify-center">
+              <span className="text-xs font-bold text-[#c0392b]">
+                {user.username.slice(0, 2).toUpperCase()}
+              </span>
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#1c1a18] border border-[#c0392b]/40 flex items-center justify-center">
-            <span className="text-xs font-bold text-[#c0392b]">W1</span>
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => setShowAuth(true)}
+            className="text-xs font-bold uppercase tracking-widest text-[#c0392b] border border-[#c0392b]/40 px-4 py-2 hover:bg-[#c0392b]/10"
+          >
+            Sign In
+          </button>
+        )}
 
       </header>
 
@@ -61,6 +81,8 @@ export default function App() {
         {page === 'builder' && <WorkoutBuilder />}
         {page === 'log' && <WorkoutLog />}
       </div>
+
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
 
     </div>
   )
