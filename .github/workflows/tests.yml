@@ -28,6 +28,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://myodex:myodex@localhost:5432/myodex
+      JWT_SECRET: test-secret
 
     steps:
       - uses: actions/checkout@v4
