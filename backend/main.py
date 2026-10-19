@@ -12,6 +12,7 @@ from db import get_db
 from models import Muscle, Exercise, GoalPreset
 from seed import seed_if_empty
 from auth import router as auth_router
+from saved_workouts import router as saved_workouts_router
 
 
 @asynccontextmanager
@@ -30,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(saved_workouts_router)
 
 # ── Helpers ─────────────────────────────────────────────────────────────
 

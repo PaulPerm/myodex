@@ -1,5 +1,5 @@
 from sqlalchemy import String, ForeignKey, DateTime, func
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from db import Base
 from datetime import datetime
@@ -38,4 +38,15 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+class SavedWorkout(Base):
+    __tablename__ = "saved_workouts"
 
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    goal: Mapped[str] = mapped_column(String(50))
+    preset: Mapped[dict] = mapped_column(JSONB)
+    blocks: Mapped[list] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    
