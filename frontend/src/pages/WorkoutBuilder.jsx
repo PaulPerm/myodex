@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import ExerciseCard from '../components/ExerciseCard'
 import MusclePanel from '../components/MusclePanel'
 import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
@@ -21,7 +21,7 @@ const EQUIPMENT = [
 ]
 
 const chip = active =>
-  `uppercase tracking-widest text-xs font-bold px-4 py-2 border transition-colors ${
+  `uppercase tracking-widest text-xs font-bold px-3 md:px-4 py-2 border transition-colors ${
     active
       ? 'bg-[#c0392b] text-white border-[#c0392b]'
       : 'bg-transparent text-white/30 border-white/10 hover:text-white/60'
@@ -31,19 +31,20 @@ const label = 'text-[10px] uppercase tracking-widest text-white/30 font-bold mb-
 
 export default function WorkoutBuilder() {
   const { user } = useAuth()
-  const [view, setView]             = useState('anterior')
-  const [selected, setSelected]     = useState([])
-  const [goal, setGoal]             = useState('hypertrophy')
-  const [categories, setCategories] = useState([])
-  const [perMuscle, setPerMuscle]   = useState(2)
-  const [workout, setWorkout]       = useState(null)
-  const [loading, setLoading]       = useState(false)
-  const [error, setError]           = useState(null)
-  const [swapping, setSwapping]     = useState(null)
-  const [swapMsg, setSwapMsg]       = useState(null)
+  const [view, setView]               = useState('anterior')
+  const [selected, setSelected]       = useState([])
+  const [goal, setGoal]               = useState('hypertrophy')
+  const [categories, setCategories]   = useState([])
+  const [perMuscle, setPerMuscle]     = useState(2)
+  const [workout, setWorkout]         = useState(null)
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState(null)
+  const [swapping, setSwapping]       = useState(null)
+  const [swapMsg, setSwapMsg]         = useState(null)
   const [workoutName, setWorkoutName] = useState('')
-  const [saving, setSaving]         = useState(false)
-  const [saveMsg, setSaveMsg]       = useState(null)
+  const [saving, setSaving]           = useState(false)
+  const [saveMsg, setSaveMsg]         = useState(null)
+  const resultsRef = useRef(null)
 
   function toggleMuscle(muscleData) {
     const slug = normalizeMuscle(muscleData.muscle)
@@ -68,6 +69,9 @@ export default function WorkoutBuilder() {
       })
       if (!res.ok) throw new Error()
       setWorkout(await res.json())
+      if (window.innerWidth < 768) {
+        setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+      }
     } catch {
       setError('Could not generate workout. Is the backend running?')
     } finally {
@@ -132,45 +136,47 @@ export default function WorkoutBuilder() {
   const mapData = selected.length ? [{ name: 'Selected', muscles: toMapMuscles(selected) }] : []
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex gap-6 p-6 flex-1">
+    <div className="flex flex-col md:min-h-[calc(100vh-4rem)]">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6 flex-1">
 
         {/* Left card — muscle selection */}
-        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6 flex-1 min-w-0">
+        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6 flex-1 min-w-0">
           <div>
             <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
               Select Targets
             </h2>
             <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
-              Click muscles to add or remove them
+              Tap muscles to add or remove them
             </p>
           </div>
 
-          <div className="flex gap-6 flex-1">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 flex-1">
             <MusclePanel
               view={view}
               setView={setView}
               data={mapData}
               handleMuscleClick={toggleMuscle}
-              hint="Click to select muscles"
+              hint="Tap to select muscles"
             />
 
-            <div className="flex flex-col gap-2 flex-1 pt-2">
+            <div className="flex flex-col gap-2 flex-1 sm:pt-2">
               <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-1">
                 Selected ({selected.length})
               </p>
               {selected.length === 0 && (
                 <p className="text-xs uppercase tracking-widest text-white/20">None yet</p>
               )}
-              {selected.map(m => (
-                <button
-                  key={m}
-                  onClick={() => toggleMuscle({ muscle: m })}
-                  className="flex justify-between text-xs uppercase tracking-widest text-white/60 border border-white/10 px-3 py-2 hover:border-[#c0392b]/50 hover:text-white transition-colors"
-                >
-                  {formatMuscle(m)} <span className="text-white/30">✕</span>
-                </button>
-              ))}
+              <div className="flex flex-wrap sm:flex-col gap-2">
+                {selected.map(m => (
+                  <button
+                    key={m}
+                    onClick={() => toggleMuscle({ muscle: m })}
+                    className="flex justify-between gap-3 text-xs uppercase tracking-widest text-white/60 border border-white/10 px-3 py-2 hover:border-[#c0392b]/50 hover:text-white transition-colors"
+                  >
+                    {formatMuscle(m)} <span className="text-white/30">✕</span>
+                  </button>
+                ))}
+              </div>
               {selected.length > 0 && (
                 <button
                   onClick={() => setSelected([])}
@@ -184,14 +190,14 @@ export default function WorkoutBuilder() {
         </div>
 
         {/* Right card — options + results */}
-        <div className="flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-6">
+        <div className="flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6">
           <h2 className="text-xl font-bold uppercase tracking-widest text-white mb-4" style={{ fontFamily: 'Bebas Neue' }}>
             Workout Builder
           </h2>
 
           {/* Goal */}
           <p className={label}>Goal</p>
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             {GOALS.map(g => (
               <button key={g.key} onClick={() => setGoal(g.key)} className={chip(goal === g.key)}>
                 {g.label}
@@ -201,7 +207,7 @@ export default function WorkoutBuilder() {
 
           {/* Equipment */}
           <p className={label}>Equipment</p>
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <button onClick={() => setCategories([])} className={chip(categories.length === 0)}>Any</button>
             {EQUIPMENT.map(c => (
               <button key={c.key} onClick={() => toggleCategory(c.key)} className={chip(categories.includes(c.key))}>
@@ -228,11 +234,11 @@ export default function WorkoutBuilder() {
           </button>
 
           {/* Results */}
-          <div className="flex flex-col overflow-y-auto flex-1">
+          <div ref={resultsRef} className="scroll-mt-16 flex flex-col md:overflow-y-auto flex-1">
             {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
 
             {!workout && !error && (
-              <p className="text-sm uppercase tracking-widest text-white/20 text-center mt-10">
+              <p className="text-sm uppercase tracking-widest text-white/20 text-center my-6 md:mt-10">
                 {selected.length ? 'Ready when you are' : 'Select at least one muscle'}
               </p>
             )}
@@ -270,7 +276,7 @@ export default function WorkoutBuilder() {
                   </p>
                 )}
 
-                <div className="flex gap-6 border border-white/10 px-4 py-3 mb-6 text-xs uppercase tracking-widest text-white/60">
+                <div className="flex justify-between sm:justify-start sm:gap-6 border border-white/10 px-4 py-3 mb-6 text-xs uppercase tracking-widest text-white/60">
                   <span><span className="text-[#c0392b] font-bold">{workout.preset.sets}</span> sets</span>
                   <span><span className="text-[#c0392b] font-bold">{workout.preset.reps}</span> reps</span>
                   <span><span className="text-[#c0392b] font-bold">{workout.preset.rest}</span> rest</span>
@@ -290,7 +296,7 @@ export default function WorkoutBuilder() {
                           return (
                             <div key={ex.id}>
                               <div className="flex items-stretch gap-2">
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   <ExerciseCard exercise={ex} onClick={() => {}} />
                                 </div>
                                 <button
