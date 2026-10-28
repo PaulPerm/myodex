@@ -12,14 +12,15 @@ An interactive muscle map for browsing exercises, building workouts, and logging
 - **Workout Builder** — select muscles, goal (strength / hypertrophy / endurance), and equipment to generate a workout; shuffle individual exercises
 - **Accounts** — register / sign in with JWT auth
 - **My Workouts** — save generated workouts, view, expand, and delete them
+- **Workout Log** — start a session blank or from a saved workout; log weight, reps, RPE, and notes per set; lbs/kg toggle; in-progress session survives refresh; browse and delete past sessions
 - **Mobile layout** — responsive pages with a bottom tab bar
-- **Workout Log** *(in progress)* — log sets with weight, reps, RPE, and notes; lbs/kg toggle
+- **Analytics** — Vercel Analytics for visitor tracking
 
 ## Tech Stack
 
 | Layer    | Tech |
 |----------|------|
-| Frontend | React (Vite), Tailwind CSS, react-body-highlighter, lucide-react |
+| Frontend | React (Vite), Tailwind CSS, react-body-highlighter, lucide-react, Vercel Analytics |
 | Backend  | FastAPI, SQLAlchemy 2.0, Alembic, PyJWT, bcrypt |
 | Database | PostgreSQL |
 | Infra    | Docker Compose (local), Vercel (frontend), Railway (backend + Postgres), GitHub Actions (tests) |
@@ -88,6 +89,7 @@ docker compose exec backend alembic upgrade head
 - [x] Auth
 - [x] Saved workouts
 - [x] Mobile layout MVP
-- [ ] Workout Log
+- [x] Workout Log
+- [ ] "Terminal" UI redesign
 - [ ] PR tracking + progress graphs
-- [ ] Weekly muscle heatmapd
+- [ ] Weekly muscle heatmap
