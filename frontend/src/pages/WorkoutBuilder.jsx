@@ -20,14 +20,18 @@ const EQUIPMENT = [
   { key: 'machine',     label: 'Machine' },
 ]
 
+const card  = 'bg-bg border border-rule p-4 md:p-6'
+const title = 'font-display font-black text-[28px] uppercase tracking-[0.04em] text-paper leading-none'
+const label = 'text-[11px] font-medium uppercase tracking-[0.12em] text-text-min mb-2'
+
 const chip = active =>
-  `uppercase tracking-widest text-xs font-bold px-3 md:px-4 py-2 border transition-colors ${
+  `uppercase tracking-[0.1em] text-[12px] font-semibold px-3 md:px-4 py-2 border transition-colors ${
     active
-      ? 'bg-[#c0392b] text-white border-[#c0392b]'
-      : 'bg-transparent text-white/30 border-white/10 hover:text-white/60'
+      ? 'bg-paper text-ink border-paper'
+      : 'bg-transparent text-text-2 border-rule-strong hover:text-paper'
   }`
 
-const label = 'text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2'
+const stepper = 'uppercase text-[12px] font-semibold w-10 h-10 border border-rule-strong text-paper'
 
 export default function WorkoutBuilder() {
   const { user } = useAuth()
@@ -134,18 +138,17 @@ export default function WorkoutBuilder() {
   }
 
   const mapData = selected.length ? [{ name: 'Selected', muscles: toMapMuscles(selected) }] : []
+  const canSave = workoutName.trim() && !saving
 
   return (
     <div className="flex flex-col md:min-h-[calc(100vh-4rem)]">
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6 flex-1">
 
         {/* Left card — muscle selection */}
-        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6 flex-1 min-w-0">
+        <div className={`flex flex-col gap-4 flex-1 min-w-0 ${card}`}>
           <div>
-            <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-              Select Targets
-            </h2>
-            <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
+            <h2 className={title}>Select Targets</h2>
+            <p className="text-[13px] text-text-3 mt-2">
               Tap muscles to add or remove them
             </p>
           </div>
@@ -160,27 +163,27 @@ export default function WorkoutBuilder() {
             />
 
             <div className="flex flex-col gap-2 flex-1 sm:pt-2">
-              <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-1">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-min mb-1">
                 Selected ({selected.length})
               </p>
               {selected.length === 0 && (
-                <p className="text-xs uppercase tracking-widest text-white/20">None yet</p>
+                <p className="text-[13px] text-text-min">None yet</p>
               )}
               <div className="flex flex-wrap sm:flex-col gap-2">
                 {selected.map(m => (
                   <button
                     key={m}
                     onClick={() => toggleMuscle({ muscle: m })}
-                    className="flex justify-between gap-3 text-xs uppercase tracking-widest text-white/60 border border-white/10 px-3 py-2 hover:border-[#c0392b]/50 hover:text-white transition-colors"
+                    className="flex justify-between gap-3 text-[12px] uppercase tracking-[0.06em] text-text-2 border border-rule-strong px-3 py-2 hover:text-paper hover:border-rule-input transition-colors"
                   >
-                    {formatMuscle(m)} <span className="text-white/30">✕</span>
+                    {formatMuscle(m)} <span className="text-text-3">✕</span>
                   </button>
                 ))}
               </div>
               {selected.length > 0 && (
                 <button
                   onClick={() => setSelected([])}
-                  className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 mt-2 self-start"
+                  className="text-[11px] uppercase tracking-[0.1em] text-text-3 hover:text-paper mt-2 self-start"
                 >
                   Clear all
                 </button>
@@ -190,14 +193,12 @@ export default function WorkoutBuilder() {
         </div>
 
         {/* Right card — options + results */}
-        <div className="flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6">
-          <h2 className="text-xl font-bold uppercase tracking-widest text-white mb-4" style={{ fontFamily: 'Bebas Neue' }}>
-            Workout Builder
-          </h2>
+        <div className={`flex flex-col flex-1 min-w-0 ${card}`}>
+          <h2 className={`${title} mb-6`}>Workout Builder</h2>
 
           {/* Goal */}
           <p className={label}>Goal</p>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-5">
             {GOALS.map(g => (
               <button key={g.key} onClick={() => setGoal(g.key)} className={chip(goal === g.key)}>
                 {g.label}
@@ -207,7 +208,7 @@ export default function WorkoutBuilder() {
 
           {/* Equipment */}
           <p className={label}>Equipment</p>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-5">
             <button onClick={() => setCategories([])} className={chip(categories.length === 0)}>Any</button>
             {EQUIPMENT.map(c => (
               <button key={c.key} onClick={() => toggleCategory(c.key)} className={chip(categories.includes(c.key))}>
@@ -218,27 +219,26 @@ export default function WorkoutBuilder() {
 
           {/* Per muscle */}
           <p className={label}>Exercises per muscle</p>
-          <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setPerMuscle(n => Math.max(1, n - 1))} className={chip(false)}>−</button>
-            <span className="text-white text-lg w-6 text-center" style={{ fontFamily: 'Bebas Neue' }}>{perMuscle}</span>
-            <button onClick={() => setPerMuscle(n => Math.min(5, n + 1))} className={chip(false)}>+</button>
+          <div className="flex items-center gap-4 mb-6">
+            <button onClick={() => setPerMuscle(n => Math.max(1, n - 1))} className={stepper}>−</button>
+            <span className="font-display font-black text-[48px] leading-none text-paper w-8 text-center">{perMuscle}</span>
+            <button onClick={() => setPerMuscle(n => Math.min(5, n + 1))} className={stepper}>+</button>
           </div>
 
           <button
             onClick={generate}
             disabled={selected.length === 0 || loading}
-            className="uppercase tracking-widest text-sm font-bold py-3 mb-6 bg-[#c0392b] text-white hover:bg-[#a93226] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ fontFamily: 'Bebas Neue' }}
+            className="uppercase tracking-[0.1em] text-[12px] font-semibold py-3 mb-6 bg-paper text-ink disabled:bg-transparent disabled:text-text-min disabled:border disabled:border-rule disabled:cursor-not-allowed"
           >
             {loading ? 'Generating...' : workout ? 'Regenerate' : 'Generate Workout'}
           </button>
 
           {/* Results */}
           <div ref={resultsRef} className="scroll-mt-16 flex flex-col md:overflow-y-auto flex-1">
-            {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+            {error && <p className="text-[13px] text-paper">{error}</p>}
 
             {!workout && !error && (
-              <p className="text-sm uppercase tracking-widest text-white/20 text-center my-6 md:mt-10">
+              <p className="text-[13px] text-text-min text-center my-6 md:mt-10">
                 {selected.length ? 'Ready when you are' : 'Select at least one muscle'}
               </p>
             )}
@@ -254,41 +254,45 @@ export default function WorkoutBuilder() {
                         onChange={e => setWorkoutName(e.target.value)}
                         placeholder="Name this workout..."
                         maxLength={100}
-                        className="flex-1 min-w-0 bg-white/5 border border-white/10 px-4 py-2 text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
+                        className="flex-1 min-w-0 bg-transparent border border-rule-input px-4 py-2 text-base md:text-[13px] text-paper outline-none focus:border-paper"
                       />
                       <button
                         onClick={saveWorkout}
-                        disabled={!workoutName.trim() || saving}
-                        className="uppercase tracking-widest text-xs font-bold px-4 py-2 border border-[#c0392b]/40 text-[#c0392b] hover:bg-[#c0392b]/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        disabled={!canSave}
+                        className={`uppercase tracking-[0.1em] text-[12px] font-semibold px-4 py-2 border transition-colors ${
+                          canSave
+                            ? 'border-paper text-paper hover:bg-paper hover:text-ink'
+                            : 'border-rule text-text-min cursor-not-allowed'
+                        }`}
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>
                     </div>
                     {saveMsg && (
-                      <p className={`text-[10px] uppercase tracking-widest mt-2 ${saveMsg.ok ? 'text-white/50' : 'text-[#c0392b]'}`}>
+                      <p className={`text-[11px] uppercase tracking-[0.06em] mt-2 ${saveMsg.ok ? 'text-text-3' : 'text-paper'}`}>
                         {saveMsg.text}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-[10px] uppercase tracking-widest text-white/30 mb-4">
+                  <p className="text-[13px] text-text-3 mb-4">
                     Sign in to save workouts
                   </p>
                 )}
 
-                <div className="flex justify-between sm:justify-start sm:gap-6 border border-white/10 px-4 py-3 mb-6 text-xs uppercase tracking-widest text-white/60">
-                  <span><span className="text-[#c0392b] font-bold">{workout.preset.sets}</span> sets</span>
-                  <span><span className="text-[#c0392b] font-bold">{workout.preset.reps}</span> reps</span>
-                  <span><span className="text-[#c0392b] font-bold">{workout.preset.rest}</span> rest</span>
+                <div className="flex justify-between sm:justify-start sm:gap-6 border border-rule px-4 py-3 mb-6 text-[12px] uppercase tracking-[0.06em] text-text-3">
+                  <span><span className="text-paper font-semibold">{workout.preset.sets}</span> sets</span>
+                  <span><span className="text-paper font-semibold">{workout.preset.reps}</span> reps</span>
+                  <span><span className="text-paper font-semibold">{workout.preset.rest}</span> rest</span>
                 </div>
 
                 {workout.blocks.map((block, i) => (
                   <div key={block.muscle} className="mb-6">
-                    <h3 className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-3">
+                    <h3 className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-3 mb-3">
                       {formatMuscle(block.muscle)}
                     </h3>
                     {block.exercises.length === 0 ? (
-                      <p className="text-xs uppercase tracking-widest text-white/20">No exercises match these filters</p>
+                      <p className="text-[13px] text-text-min">No exercises match these filters</p>
                     ) : (
                       <>
                         {block.exercises.map((ex, j) => {
@@ -304,21 +308,21 @@ export default function WorkoutBuilder() {
                                   disabled={swapping === key}
                                   title="Shuffle exercise"
                                   aria-label="Shuffle exercise"
-                                  className="flex items-center justify-center px-3 mb-2 text-white/40 border border-white/10 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-30"
+                                  className="flex items-center justify-center px-3 mb-2 text-paper border border-rule hover:border-rule-input transition-colors disabled:text-text-min"
                                 >
                                   {swapping === key
-                                    ? <Loader2 size={16} className="animate-spin" />
-                                    : <Shuffle size={16} />}
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : <Shuffle size={14} />}
                                 </button>
                               </div>
                               {swapMsg?.key === key && (
-                                <p className="text-[10px] uppercase tracking-widest text-[#c0392b] mt-1 mb-2">{swapMsg.text}</p>
+                                <p className="text-[11px] uppercase tracking-[0.06em] text-text-3 mt-1 mb-2">{swapMsg.text}</p>
                               )}
                             </div>
                           )
                         })}
                         {block.exercises.length < perMuscle && (
-                          <p className="text-[10px] uppercase tracking-widest text-white/30 mt-2">
+                          <p className="text-[11px] uppercase tracking-[0.06em] text-text-min mt-2">
                             Only {block.exercises.length} available with these filters
                           </p>
                         )}

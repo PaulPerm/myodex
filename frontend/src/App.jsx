@@ -26,26 +26,26 @@ function UserMenu({ user, logout }) {
 
   return (
     <div ref={ref} className="relative flex items-center gap-3">
-      <p className="hidden md:block text-xs font-bold uppercase tracking-widest text-white">{user.username}</p>
+      <p className="hidden md:block text-[12px] font-medium uppercase tracking-[0.1em] text-paper">{user.username}</p>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#1c1a18] border border-[#c0392b]/40 flex items-center justify-center hover:border-[#c0392b] transition-colors"
+        className="w-9 h-9 md:w-10 md:h-10 border border-paper flex items-center justify-center"
         aria-label="Account menu"
       >
-        <span className="text-xs font-bold text-[#c0392b]">
+        <span className="text-[12px] font-semibold text-paper">
           {user.username.slice(0, 2).toUpperCase()}
         </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-48 bg-black/95 border border-white/10 shadow-xl">
-          <div className="px-4 py-3 border-b border-white/10">
-            <p className="text-[10px] uppercase tracking-widest text-white/30">Signed in as</p>
-            <p className="text-xs font-bold uppercase tracking-widest text-white truncate">{user.username}</p>
+        <div className="absolute right-0 top-12 z-50 w-48 bg-bg border border-rule-input">
+          <div className="px-4 py-3 border-b border-rule">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-text-min">Signed in as</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-paper truncate">{user.username}</p>
           </div>
           <button
             onClick={() => { setOpen(false); logout() }}
-            className="w-full flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-widest text-[#c0392b] hover:bg-white/5"
+            className="w-full flex items-center gap-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-paper hover:bg-rule"
           >
             <LogOut size={14} /> Log out
           </button>
@@ -61,33 +61,33 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false)
 
   return (
-    <div className="min-h-screen text-[#e8e0d0] pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+    <div className="min-h-screen text-paper pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
 
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 md:px-8 h-14 md:h-16 border-b border-white/10 bg-black/85 backdrop-blur-md">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 md:px-8 min-h-16 border-b border-rule bg-bg">
 
         {/* Logo */}
-        <h1
-          className="text-2xl md:text-3xl tracking-[4px] text-white"
-          style={{ fontFamily: 'Bebas Neue' }}
-        >
-          MYO<span className="text-[#c0392b]">D</span>EX
+        <h1 className="logo-cursor font-display font-black text-[26px] md:text-[32px] tracking-[0.06em] text-paper leading-none">
+          MYO<span>D</span>EX
         </h1>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex h-full">
-          {PAGES.map(p => (
-            <button
-              key={p.key}
-              onClick={() => setPage(p.key)}
-              className={`px-6 h-full text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${
-                page === p.key
-                  ? 'text-white border-[#c0392b]'
-                  : 'text-white/30 border-transparent hover:text-white/60'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <nav className="hidden md:flex self-stretch">
+          {PAGES.map(p => {
+            const active = page === p.key
+            return (
+              <button
+                key={p.key}
+                onClick={() => setPage(p.key)}
+                className={`px-5 text-[12px] uppercase tracking-[0.1em] border-b-2 transition-colors ${
+                  active
+                    ? 'nav-active text-paper font-semibold border-paper'
+                    : 'text-text-3 font-medium border-transparent hover:text-paper'
+                }`}
+              >
+                {p.label}
+              </button>
+            )
+          })}
         </nav>
 
         {/* Account */}
@@ -96,9 +96,9 @@ export default function App() {
         ) : (
           <button
             onClick={() => setShowAuth(true)}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#c0392b] border border-[#c0392b]/40 px-3 md:px-4 py-2 hover:bg-[#c0392b]/10"
+            className="flex items-center gap-2 bg-paper text-ink text-[12px] font-semibold uppercase tracking-[0.1em] px-3 md:px-4 py-2"
           >
-            <User size={14} className="md:hidden" />
+            <User size={12} className="md:hidden" />
             Sign In
           </button>
         )}
@@ -114,7 +114,7 @@ export default function App() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-white/10 bg-black/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-rule bg-bg pb-[env(safe-area-inset-bottom)]">
         {PAGES.map(({ key, short, Icon }) => {
           const active = page === key
           return (
@@ -124,10 +124,10 @@ export default function App() {
               className="relative flex-1 h-16 flex flex-col items-center justify-center gap-1"
             >
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#c0392b] shadow-[0_0_8px_#c0392b]" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-accent" />
               )}
-              <Icon size={20} className={active ? 'text-[#c0392b]' : 'text-white/30'} />
-              <span className={`text-[10px] font-bold uppercase tracking-widest ${active ? 'text-white' : 'text-white/30'}`}>
+              <Icon size={16} className={active ? 'text-paper' : 'text-text-3'} />
+              <span className={`text-[10px] uppercase tracking-[0.1em] ${active ? 'text-paper font-semibold' : 'text-text-3 font-medium'}`}>
                 {short}
               </span>
             </button>

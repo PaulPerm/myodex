@@ -12,11 +12,15 @@ const CATEGORIES = [
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+const card  = 'bg-bg border border-rule p-4 md:p-6'
+const title = 'font-display font-black text-[28px] uppercase tracking-[0.04em] text-paper leading-none'
+const label = 'text-[11px] font-medium uppercase tracking-[0.12em] text-text-min'
+
 const chip = active =>
-  `uppercase tracking-widest text-xs font-bold px-3 md:px-4 py-2 border transition-colors ${
+  `uppercase tracking-[0.1em] text-[12px] font-semibold px-3 md:px-4 py-2 border transition-colors ${
     active
-      ? 'bg-[#c0392b] text-white border-[#c0392b]'
-      : 'bg-transparent text-white/30 border-white/10 hover:text-white/60'
+      ? 'bg-paper text-ink border-paper'
+      : 'bg-transparent text-text-2 border-rule-strong hover:text-paper'
   }`
 
 export default function ExerciseMap() {
@@ -77,13 +81,11 @@ export default function ExerciseMap() {
       <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6 flex-1">
 
         {/* Left card — Anatomical Target Map */}
-        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6 flex-1 min-w-0">
+        <div className={`flex flex-col gap-4 flex-1 min-w-0 ${card}`}>
 
           <div>
-            <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-              Anatomical Target Map
-            </h2>
-            <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
+            <h2 className={title}>Anatomical Target Map</h2>
+            <p className="text-[13px] text-text-3 mt-2">
               Tap a muscle to see exercises
             </p>
           </div>
@@ -100,7 +102,7 @@ export default function ExerciseMap() {
             {/* Recruitment index */}
             <div className="flex flex-col gap-4 flex-1 sm:pt-2">
               {!activeMuscle && (
-                <p className="hidden sm:block text-xs uppercase tracking-widest text-white/20 mt-4">
+                <p className="hidden sm:block text-[13px] text-text-min mt-4">
                   Select a muscle to see recruitment
                 </p>
               )}
@@ -108,17 +110,17 @@ export default function ExerciseMap() {
               {selectedExercise ? (
                 <>
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-2 sm:mb-3">Target</p>
-                    <p className="text-sm font-bold uppercase tracking-wide text-white">
+                    <p className={`${label} mb-2 sm:mb-3`}>Target</p>
+                    <p className="text-[14px] font-semibold uppercase tracking-[0.03em] text-paper">
                       {formatMuscle(selectedExercise.target)}
                     </p>
                   </div>
-                  <div className="h-px bg-white/10" />
+                  <div className="h-px bg-rule" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2 sm:mb-3">Secondary</p>
+                    <p className={`${label} mb-2 sm:mb-3`}>Secondary</p>
                     <div className="flex flex-wrap sm:flex-col gap-x-4 gap-y-2">
                       {selectedExercise.secondary.map(muscle => (
-                        <p key={muscle} className="text-xs uppercase tracking-widest text-white/40">
+                        <p key={muscle} className="text-[12px] uppercase tracking-[0.06em] text-text-2">
                           {formatMuscle(muscle)}
                         </p>
                       ))}
@@ -128,18 +130,18 @@ export default function ExerciseMap() {
               ) : activeMuscle && data && (
                 <>
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-2 sm:mb-3">Primary</p>
-                    <p className="text-sm font-bold uppercase tracking-wide text-white">{muscleLabel}</p>
+                    <p className={`${label} mb-2 sm:mb-3`}>Primary</p>
+                    <p className="text-[14px] font-semibold uppercase tracking-[0.03em] text-paper">{muscleLabel}</p>
                   </div>
-                  <div className="h-px bg-white/10" />
+                  <div className="h-px bg-rule" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2 sm:mb-3">Secondary</p>
+                    <p className={`${label} mb-2 sm:mb-3`}>Secondary</p>
                     <div className="flex flex-wrap sm:flex-col gap-x-4 gap-y-2">
                       {data.secondary
                         .flatMap(ex => ex.secondary)
                         .filter((v, i, a) => a.indexOf(v) === i)
                         .map(muscle => (
-                          <p key={muscle} className="text-xs uppercase tracking-widest text-white/40">
+                          <p key={muscle} className="text-[12px] uppercase tracking-[0.06em] text-text-2">
                             {formatMuscle(muscle)}
                           </p>
                         ))}
@@ -152,16 +154,11 @@ export default function ExerciseMap() {
         </div>
 
         {/* Right card — Exercises */}
-        <div
-          ref={listRef}
-          className="scroll-mt-16 flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6"
-        >
+        <div ref={listRef} className={`scroll-mt-16 flex flex-col flex-1 min-w-0 ${card}`}>
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-              Exercises
-            </h2>
-            <button className="text-xs uppercase tracking-widest text-[#c0392b] border border-[#c0392b]/40 px-3 py-1 hover:bg-[#c0392b]/10 transition-colors">
+            <h2 className={title}>Exercises</h2>
+            <button className="text-[12px] font-semibold uppercase tracking-[0.1em] text-paper border border-paper px-3 py-1">
               + Add Movement
             </button>
           </div>
@@ -171,7 +168,7 @@ export default function ExerciseMap() {
             <input
               type="text"
               placeholder="Search exercises..."
-              className="w-full sm:w-auto sm:flex-1 min-w-0 bg-white/5 border border-white/10 px-4 py-2 text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
+              className="w-full sm:w-auto sm:flex-1 min-w-0 bg-transparent border border-rule-input px-4 py-2 text-base md:text-[13px] text-paper outline-none focus:border-paper"
             />
             <button onClick={() => changeCategory('all')} className={chip(category === 'all')}>
               All
@@ -191,23 +188,23 @@ export default function ExerciseMap() {
           <div className="flex flex-col md:overflow-y-auto flex-1">
             {!activeMuscle && (
               <div className="text-center my-10 md:mt-20">
-                <p className="text-sm uppercase tracking-widest text-white/20">Select a muscle group</p>
+                <p className="text-[13px] text-text-min">Select a muscle group</p>
               </div>
             )}
 
             {activeMuscle && loading && (
-              <p className="text-xs uppercase tracking-widest text-white/20">Loading...</p>
+              <p className="text-[13px] text-text-min">Loading...</p>
             )}
 
             {activeMuscle && error && (
-              <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>
+              <p className="text-[13px] text-paper">{error}</p>
             )}
 
             {data && !loading && (
               <>
                 {data.primary.length > 0 && (
                   <>
-                    <h3 className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-3">Primary</h3>
+                    <h3 className={`${label} mb-3`}>Primary</h3>
                     <div className="flex flex-col mb-6">
                       {data.primary.map(ex => (
                         <ExerciseCard key={ex.id} exercise={ex} onClick={handleExerciseClick} />
@@ -217,7 +214,7 @@ export default function ExerciseMap() {
                 )}
                 {data.secondary.length > 0 && (
                   <>
-                    <h3 className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-3">Also works {muscleLabel}</h3>
+                    <h3 className={`${label} mb-3`}>Also works {muscleLabel}</h3>
                     <div className="flex flex-col">
                       {data.secondary.map(ex => (
                         <ExerciseCard key={ex.id} exercise={ex} onClick={handleExerciseClick} />

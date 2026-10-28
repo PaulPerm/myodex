@@ -26,25 +26,25 @@ export default function AuthModal({ onClose }) {
     }
   }
 
-  const input = 'w-full bg-white/5 border border-white/10 px-4 py-3 md:py-2 text-base md:text-xs tracking-widest text-white placeholder-white/20 outline-none focus:border-white/30'
+  const input = 'w-full bg-transparent border border-rule-input px-4 py-3 md:py-2 text-base md:text-[13px] text-paper outline-none focus:border-paper'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,15,14,0.85)] p-4" onClick={onClose}>
       <form
         onSubmit={handleSubmit}
         onClick={e => e.stopPropagation()}
-        className="relative w-full max-w-sm flex flex-col gap-4 bg-black/95 border border-white/10 p-6 md:p-8"
+        className="relative w-full max-w-sm flex flex-col gap-4 bg-bg border border-rule-input p-6 md:p-8"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 p-2 text-white/40 hover:text-white"
+          className="absolute top-3 right-3 p-2 text-text-3 hover:text-paper"
           aria-label="Close"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        <h2 className="text-2xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
+        <h2 className="font-display font-black text-[28px] uppercase tracking-[0.04em] text-paper leading-none">
           {mode === 'login' ? 'Sign In' : 'Create Account'}
         </h2>
 
@@ -59,11 +59,11 @@ export default function AuthModal({ onClose }) {
           onChange={e => setPassword(e.target.value)} required minLength={8}
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
 
-        {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+        {error && <p className="text-[13px] text-paper">{error}</p>}
 
         <button
           disabled={busy}
-          className="bg-[#c0392b] text-white text-xs font-bold uppercase tracking-widest py-3 md:py-2 hover:bg-[#a93226] disabled:opacity-50"
+          className="bg-paper text-ink text-[12px] font-semibold uppercase tracking-[0.1em] py-3 md:py-2 disabled:bg-transparent disabled:text-text-min disabled:border disabled:border-rule"
         >
           {busy ? '...' : mode === 'login' ? 'Sign In' : 'Register'}
         </button>
@@ -71,9 +71,11 @@ export default function AuthModal({ onClose }) {
         <button
           type="button"
           onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(null) }}
-          className="text-[10px] uppercase tracking-widest text-white/40 hover:text-white/70 py-1"
+          className="text-[13px] text-text-3 py-1"
         >
-          {mode === 'login' ? 'No account? Register' : 'Have an account? Sign in'}
+          {mode === 'login'
+            ? <>No account? <span className="text-paper">Register</span></>
+            : <>Have an account? <span className="text-paper">Sign in</span></>}
         </button>
       </form>
     </div>

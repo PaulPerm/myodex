@@ -33,18 +33,18 @@ const emptySet = prev => ({ weight: prev?.weight ?? '', reps: '', rpe: '', note:
 
 // ── styles ──────────────────────────────────────────────────────────────
 
-const card  = 'bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6'
-const title = 'text-xl font-bold uppercase tracking-widest text-white'
-const label = 'text-[10px] uppercase tracking-widest text-white/30 font-bold'
-const input = 'w-full min-w-0 bg-white/5 border border-white/10 px-2 py-2 text-base md:text-xs tracking-widest text-white placeholder-white/20 outline-none focus:border-white/30'
+const card  = 'bg-bg border border-rule p-4 md:p-6'
+const title = 'font-display font-black text-[28px] uppercase tracking-[0.04em] text-paper leading-none'
+const label = 'text-[11px] font-medium uppercase tracking-[0.12em] text-text-min'
+const input = 'w-full min-w-0 bg-transparent border border-rule-input px-2 py-2 text-base md:text-[13px] text-paper outline-none focus:border-paper'
 const chip  = active =>
-  `uppercase tracking-widest text-xs font-bold px-3 py-2 border transition-colors ${
+  `uppercase tracking-[0.1em] text-[12px] font-semibold px-3 py-2 border transition-colors ${
     active
-      ? 'bg-[#c0392b] text-white border-[#c0392b]'
-      : 'bg-transparent text-white/30 border-white/10 hover:text-white/60'
+      ? 'bg-paper text-ink border-paper'
+      : 'bg-transparent text-text-2 border-rule-strong hover:text-paper'
   }`
-const ghostBtn = 'uppercase tracking-widest text-xs font-bold px-3 py-2 border border-[#c0392b]/40 text-[#c0392b] hover:bg-[#c0392b]/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
-const solidBtn = 'uppercase tracking-widest text-sm font-bold py-3 bg-[#c0392b] text-white hover:bg-[#a93226] transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+const ghostBtn = 'uppercase tracking-[0.1em] text-[12px] font-semibold px-3 py-2 border border-paper text-paper hover:bg-paper hover:text-ink transition-colors disabled:border-rule disabled:text-text-min disabled:cursor-not-allowed'
+const solidBtn = 'uppercase tracking-[0.1em] text-[12px] font-semibold py-3 bg-paper text-ink disabled:bg-transparent disabled:text-text-min disabled:border disabled:border-rule disabled:cursor-not-allowed'
 
 // ── page ────────────────────────────────────────────────────────────────
 
@@ -108,8 +108,8 @@ export default function WorkoutLog() {
     return (
       <div className="p-3 md:p-6">
         <div className={`${card} max-w-3xl mx-auto`}>
-          <h2 className={title} style={{ fontFamily: 'Bebas Neue' }}>Workout Log</h2>
-          <p className="text-sm uppercase tracking-widest text-white/20 text-center my-10">
+          <h2 className={title}>Workout Log</h2>
+          <p className="text-[13px] text-text-min text-center my-10">
             Sign in to log workouts
           </p>
         </div>
@@ -119,7 +119,7 @@ export default function WorkoutLog() {
 
   return (
     <div className="p-3 md:p-6 flex flex-col gap-4 md:gap-6 max-w-3xl mx-auto">
-      {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+      {error && <p className="text-[12px] uppercase tracking-[0.06em] text-paper">{error}</p>}
 
       {draft ? (
         <ActiveSession
@@ -143,22 +143,22 @@ export default function WorkoutLog() {
 function StartPanel({ saved, onBlank, onSaved }) {
   return (
     <div className={card}>
-      <h2 className={`${title} mb-4`} style={{ fontFamily: 'Bebas Neue' }}>Start a Session</h2>
+      <h2 className={`${title} mb-4`}>Start a Session</h2>
 
-      <button onClick={onBlank} className={`${solidBtn} w-full mb-6`} style={{ fontFamily: 'Bebas Neue' }}>
+      <button onClick={onBlank} className={`${solidBtn} w-full mb-6`}>
         Start Blank Session
       </button>
 
       <p className={`${label} mb-2`}>Or start from a saved workout</p>
       {saved.length === 0 ? (
-        <p className="text-xs uppercase tracking-widest text-white/20">No saved workouts yet</p>
+        <p className="text-[12px] uppercase tracking-[0.06em] text-text-min">No saved workouts yet</p>
       ) : (
         <div className="flex flex-col gap-2">
           {saved.map(w => (
-            <div key={w.id} className="flex items-center justify-between gap-3 border border-white/10 px-4 py-3">
+            <div key={w.id} className="flex items-center justify-between gap-3 border border-rule px-4 py-3">
               <div className="min-w-0">
-                <p className="text-sm font-bold uppercase tracking-widest text-white truncate">{w.name}</p>
-                <p className="text-[10px] uppercase tracking-widest text-white/30 mt-1">
+                <p className="text-[16px] font-semibold uppercase tracking-[0.04em] text-paper truncate">{w.name}</p>
+                <p className="text-[11px] uppercase tracking-[0.06em] text-text-min mt-1">
                   {(w.blocks || []).reduce((n, b) => n + (b?.exercises?.length || 0), 0)} exercises · {w.goal}
                 </p>
               </div>
@@ -263,7 +263,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
   return (
     <div className={card}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className={title} style={{ fontFamily: 'Bebas Neue' }}>Active Session</h2>
+        <h2 className={title}>Active Session</h2>
         <div className="flex">
           {['lbs', 'kg'].map(u => (
             <button key={u} onClick={() => changeUnit(u)} className={chip(unit === u)}>{u}</button>
@@ -280,7 +280,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
       />
 
       {draft.exercises.length === 0 && (
-        <p className="text-xs uppercase tracking-widest text-white/20 text-center my-6">
+        <p className="text-[13px] text-text-min text-center my-6">
           No exercises yet — add one below
         </p>
       )}
@@ -289,10 +289,10 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
         {draft.exercises.map((ex, ei) => (
           <div key={`${ex.exercise_id}-${ei}`}>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-bold uppercase tracking-widest text-white truncate">{ex.name}</p>
+              <p className="text-[16px] font-semibold uppercase tracking-[0.04em] text-paper truncate">{ex.name}</p>
               <button
                 onClick={() => removeExercise(ei)}
-                className="text-white/30 hover:text-[#c0392b] p-1"
+                className="text-text-min hover:text-paper p-1"
                 aria-label="Remove exercise"
               >
                 <X size={16} />
@@ -311,7 +311,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
             {ex.sets.map((s, si) => (
               <div key={si} className="mb-2">
                 <div className="grid grid-cols-[2rem_1fr_1fr_1fr_2rem] gap-2 items-center">
-                  <span className="text-xs font-bold text-white/50 text-center">{si + 1}</span>
+                  <span className="text-[12px] font-semibold text-text-3 text-center">{si + 1}</span>
                   <input
                     className={input}
                     inputMode="decimal"
@@ -335,7 +335,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
                   />
                   <button
                     onClick={() => removeSet(ei, si)}
-                    className="text-white/30 hover:text-[#c0392b] flex justify-center"
+                    className="text-text-min hover:text-paper flex justify-center"
                     aria-label="Remove set"
                   >
                     <Trash2 size={14} />
@@ -353,7 +353,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
 
             <button
               onClick={() => addSet(ei)}
-              className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/40 hover:text-white mt-1"
+              className="flex items-center gap-1 text-[11px] uppercase tracking-[0.06em] text-text-3 hover:text-paper mt-1"
             >
               <Plus size={12} /> Add set
             </button>
@@ -379,7 +379,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
         className={`${input} px-4 resize-none`}
       />
 
-      {error && <p className="text-xs uppercase tracking-widest text-[#c0392b] mt-4">{error}</p>}
+      {error && <p className="text-[12px] uppercase tracking-[0.06em] text-paper mt-4">{error}</p>}
 
       <div className="flex gap-2 mt-6">
         <button onClick={discard} className={`${chip(false)} flex-1`}>Discard</button>
@@ -387,8 +387,7 @@ function ActiveSession({ draft, setDraft, unit, changeUnit, onFinished }) {
           onClick={finish}
           disabled={finishing}
           className={`${solidBtn} flex-[2]`}
-          style={{ fontFamily: 'Bebas Neue' }}
-        >
+                 >
           {finishing ? 'Saving...' : 'Finish Workout'}
         </button>
       </div>
@@ -410,9 +409,9 @@ function ExercisePicker({ onPick, onClose }) {
   const results = (q ? all.filter(e => e.name.toLowerCase().includes(q)) : all).slice(0, 30)
 
   return (
-    <div className="border border-white/10 mt-6 p-3">
+    <div className="border border-rule mt-6 p-3">
       <div className="flex items-center gap-2 mb-3">
-        <Search size={14} className="text-white/30 shrink-0" />
+        <Search size={14} className="text-text-min shrink-0" />
         <input
           autoFocus
           value={query}
@@ -420,7 +419,7 @@ function ExercisePicker({ onPick, onClose }) {
           placeholder="Search exercises..."
           className={`${input} uppercase`}
         />
-        <button onClick={onClose} className="text-white/40 hover:text-white p-1" aria-label="Close">
+        <button onClick={onClose} className="text-text-3 hover:text-paper p-1" aria-label="Close">
           <X size={16} />
         </button>
       </div>
@@ -429,14 +428,14 @@ function ExercisePicker({ onPick, onClose }) {
           <button
             key={e.id}
             onClick={() => onPick(e)}
-            className="text-left px-2 py-2 text-xs uppercase tracking-widest text-white/70 hover:bg-white/5 hover:text-white border-b border-white/5"
+            className="text-left px-2 py-2 text-[12px] uppercase tracking-[0.06em] text-text-2 hover:bg-rule hover:text-paper border-b border-rule"
           >
             {e.name}
-            <span className="text-white/30"> · {e.category.replace('_', ' ')}</span>
+            <span className="text-text-min"> · {e.category.replace('_', ' ')}</span>
           </button>
         ))}
         {all.length > 0 && results.length === 0 && (
-          <p className="text-xs uppercase tracking-widest text-white/20 p-2">No matches</p>
+          <p className="text-[12px] uppercase tracking-[0.06em] text-text-min p-2">No matches</p>
         )}
       </div>
     </div>
@@ -448,9 +447,9 @@ function ExercisePicker({ onPick, onClose }) {
 function History({ history, setHistory, unit }) {
   return (
     <div className={card}>
-      <h2 className={`${title} mb-4`} style={{ fontFamily: 'Bebas Neue' }}>History</h2>
+      <h2 className={`${title} mb-4`}>History</h2>
       {history.length === 0 ? (
-        <p className="text-xs uppercase tracking-widest text-white/20 text-center my-6">
+        <p className="text-[13px] text-text-min text-center my-6">
           No sessions logged yet
         </p>
       ) : (
@@ -498,43 +497,43 @@ function HistoryItem({ summary, unit, onDeleted }) {
   }
 
   return (
-    <div className="border border-white/10">
+    <div className="border border-rule">
       <div className="flex items-center justify-between gap-2 pl-4 pr-1 py-3">
         <button onClick={toggle} className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-bold uppercase tracking-widest text-white truncate">{summary.name}</p>
-          <p className="text-[10px] uppercase tracking-widest text-white/30 mt-1">
+          <p className="text-[16px] font-semibold uppercase tracking-[0.04em] text-paper truncate">{summary.name}</p>
+          <p className="text-[11px] uppercase tracking-[0.06em] text-text-min mt-1">
             {new Date(summary.performed_at).toLocaleDateString()} · {summary.exercise_count} exercises · {summary.set_count} sets
           </p>
         </button>
         <div className="flex items-center shrink-0">
-          <button onClick={toggle} className="text-white/40 hover:text-white p-2" aria-label={open ? 'Collapse' : 'Expand'}>
+          <button onClick={toggle} className="text-text-3 hover:text-paper p-2" aria-label={open ? 'Collapse' : 'Expand'}>
             {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
-          <button onClick={remove} className="text-white/40 hover:text-[#c0392b] p-2" aria-label="Delete">
+          <button onClick={remove} className="text-text-3 hover:text-paper p-2" aria-label="Delete">
             <Trash2 size={18} />
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-white/10 px-4 py-4">
-          {!detail && <p className="text-xs uppercase tracking-widest text-white/20">Loading...</p>}
+        <div className="border-t border-rule px-4 py-4">
+          {!detail && <p className="text-[12px] uppercase tracking-[0.06em] text-text-min">Loading...</p>}
           {groups.map(g => (
             <div key={g.exercise_id} className="mb-3">
-              <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-1">{g.name}</p>
+              <p className="text-[11px] uppercase tracking-[0.06em] text-paper font-semibold mb-1">{g.name}</p>
               {g.sets.map(s => (
-                <p key={s.id} className="text-xs uppercase tracking-widest text-white/60 pl-2 py-0.5">
+                <p key={s.id} className="text-[12px] uppercase tracking-[0.06em] text-text-2 pl-2 py-0.5">
                   {s.set_number}.{' '}
                   {s.weight_kg !== null ? `${round1(fromKg(parseFloat(s.weight_kg), unit))} ${unit} × ` : ''}
                   {s.reps}
-                  {s.rpe !== null && <span className="text-white/30"> @ RPE {parseFloat(s.rpe)}</span>}
-                  {s.note && <span className="text-white/30 normal-case"> — {s.note}</span>}
+                  {s.rpe !== null && <span className="text-text-min"> @ RPE {parseFloat(s.rpe)}</span>}
+                  {s.note && <span className="text-text-min normal-case"> — {s.note}</span>}
                 </p>
               ))}
             </div>
           ))}
           {detail?.notes && (
-            <p className="text-xs text-white/40 mt-2 italic">{detail.notes}</p>
+            <p className="text-[12px] text-text-3 mt-2 italic">{detail.notes}</p>
           )}
         </div>
       )}

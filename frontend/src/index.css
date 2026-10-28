@@ -1,22 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  --font-bebas: 'Bebas Neue', sans-serif;
-  --font-barlow: 'Barlow Condensed', sans-serif;
-  --color-iron: #0d0d0d;
-  --color-iron-light: #1c1a18;
-  --color-steel: #2a2826;
-  --color-chalk: #e8e0d0;
-  --color-rust: #c0392b;
-  --color-rust-dark: #8a2820;
+  --font-display: "Doto", monospace;
+  --font-mono: "Martian Mono", monospace;
+
+  --color-bg: #0f0f0e;
+  --color-grid-dot: #1f1e1c;
+  --color-rule: #2b2a27;
+  --color-rule-strong: #3a3935;
+  --color-rule-input: #4a4843;
+  --color-paper: #efede3;
+  --color-text-2: #d6d3c7;
+  --color-text-3: #a9a69b;
+  --color-text-min: #8f8d85;
+  --color-ink: #0f0f0e;
+  --color-accent: #c6f135; /* TBD — swap here only */
+
+  --radius-*: initial; /* no rounded corners */
 }
 
-body{
-  background-color: #0d0d0d;
-  font-family: 'Barlow Condensed', sans-serif;
-  background-image: url('/darkbg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+body {
+  font-family: var(--font-mono);
+  color: var(--color-paper);
+  background-color: var(--color-bg);
+  background-image: radial-gradient(var(--color-grid-dot) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
+
+::placeholder {
+  color: var(--color-text-min);
+  opacity: 1;
+}
+
+/* Logo cursor block (§5) */
+.logo-cursor::after {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 24px;
+  margin-left: 8px;
+  vertical-align: -0.1em;
+  background: var(--color-accent);
+}
+
+/* Optional bracketed active nav (§3) */
+.nav-active::before { content: "[ "; }
+.nav-active::after  { content: " ]"; }
