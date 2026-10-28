@@ -13,7 +13,7 @@ from models import Muscle, Exercise, GoalPreset
 from seed import seed_if_empty
 from auth import router as auth_router
 from saved_workouts import router as saved_workouts_router
-
+from sessions import router as sessions_router
 
 @asynccontextmanager
 async def lifespan(app):
@@ -32,7 +32,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(saved_workouts_router)
-
+app.include_router(sessions_router)
 # ── Helpers ─────────────────────────────────────────────────────────────
 
 def exercise_dict(e: Exercise):
