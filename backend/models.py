@@ -1,6 +1,7 @@
-from sqlalchemy import String, ForeignKey, DateTime, func
+from sqlalchemy import String, ForeignKey, DateTime, func, Numeric, SmallInteger, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from decimal import Decimal
 from db import Base
 from datetime import datetime
 
@@ -49,4 +50,34 @@ class SavedWorkout(Base):
     blocks: Mapped[list] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    
+class WorkoutSession(Base):
+    __tablename__ = "workout_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    saved_workout_id: Mapped[int | None] = mapped_column(
+        ForeignKey("saved_workouts.id", ondelete="SET NULL"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(100))
+    performed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    sets: Mapped[list["SessionSet"]] = relationship(
+        back_populates="session", cascade="all, delete-orphan", order_by="SessionSet.id"
+    )
+
+
+class SessionSet(Base):
+    __tablename__ = "session_sets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("workout_sessions.id", ondelete="CASCADE"), index=True)
+    exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id"), index=True)
+    set_number: Mapped[int] = mapped_column(SmallInteger)
+    weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(7, 3), nullable=True)
+    reps: Mapped[int] = mapped_column(SmallInteger)
+    rpe: Mapped[Decimal | None] = mapped_column(Numeric(3, 1), nullable=True)
+    note: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    session: Mapped[WorkoutSession] = relationship(back_populates="sets")
+    exercise: Mapped["Exercise"] = relationship()

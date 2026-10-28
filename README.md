@@ -1,73 +1,93 @@
-# Myodex
+# MYODEX
 
-![Tests](https://github.com/PaulPerm/myodex/actions/workflows/tests.yml/badge.svg)
+An interactive muscle map for browsing exercises, building workouts, and logging training.
 
-**Live demo:** https://myodex.vercel.app
+**Live:** [myodex.vercel.app](https://myodex.vercel.app)
 
-An interactive muscle map for exploring exercises and building workouts. Click a muscle on the front or back view to see ranked exercises, or select multiple muscles to generate a full workout tailored to your goal and equipment.
+> *Myo* (Greek: muscle) + *Dex* (index)
 
 ## Features
 
-**Exercise Map**
-- Clickable front/back body map covering 17 muscle groups
-- 112 exercises, each with a target muscle, secondary muscles, difficulty, and category
-- Search and category filters (Bodyweight, Free Weight, Machine)
-- Recruitment index showing primary and secondary muscles
-
-**Workout Builder**
-- Multi-select muscles directly on the body map
-- Goal presets: Strength, Hypertrophy, Endurance (sets, reps, rest)
-- Filter by equipment and choose exercises per muscle
-- Compound movements ordered first
-- Regenerate the whole workout or shuffle individual exercises
+- **Exercise Map** — tap a muscle on the body map to see ranked primary and secondary exercises, filterable by equipment
+- **Workout Builder** — select muscles, goal (strength / hypertrophy / endurance), and equipment to generate a workout; shuffle individual exercises
+- **Accounts** — register / sign in with JWT auth
+- **My Workouts** — save generated workouts, view, expand, and delete them
+- **Mobile layout** — responsive pages with a bottom tab bar
+- **Workout Log** *(in progress)* — log sets with weight, reps, RPE, and notes; lbs/kg toggle
 
 ## Tech Stack
 
-- **Frontend:** React (Vite), Tailwind CSS, react-body-highlighter, lucide-react
-- **Backend:** FastAPI (Python 3.11)
-- **Database:** PostgreSQL with SQLAlchemy 2.0 and Alembic migrations
-- **Infra:** Docker Compose, GitHub Actions CI, Vercel (frontend), Railway (backend + database)
+| Layer    | Tech |
+|----------|------|
+| Frontend | React (Vite), Tailwind CSS, react-body-highlighter, lucide-react |
+| Backend  | FastAPI, SQLAlchemy 2.0, Alembic, PyJWT, bcrypt |
+| Database | PostgreSQL |
+| Infra    | Docker Compose (local), Vercel (frontend), Railway (backend + Postgres), GitHub Actions (tests) |
 
 ## Running Locally
 
-Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+**Requirements:** Docker Desktop, Node.js
 
-```bash
-docker compose up -d --build
-```
+1. Create `backend/.env`:
+   ```
+   JWT_SECRET=<random string>
+   ```
+   Generate one with:
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(48))"
+   ```
 
-On startup, the backend applies any pending migrations and seeds the database if it's empty.
+2. Start the backend and database:
+   ```bash
+   docker compose up --build -d backend db
+   ```
+   Migrations run automatically on startup, and exercise data seeds if the tables are empty.
 
-- Frontend: http://localhost:5173
-- API: http://localhost:8000
+3. Start the frontend:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+- App: http://localhost:5173
 - API docs: http://localhost:8000/docs
 
-## Running Tests
+## Database Migrations
 
 ```bash
-docker compose exec backend pytest -v
+docker compose exec backend alembic revision --autogenerate -m "describe change"
+docker compose exec backend alembic upgrade head
 ```
 
-CI runs the backend tests against a fresh Postgres instance and builds the frontend on every push.
+## Environment Variables
 
-## API
+| Variable       | Where              | Purpose |
+|----------------|--------------------|---------|
+| `DATABASE_URL` | backend            | Postgres connection string |
+| `JWT_SECRET`   | backend            | Signs auth tokens |
+| `VITE_API_URL` | frontend (Vercel)  | Backend URL; defaults to `http://localhost:8000` |
 
-| Endpoint | Description |
-|---|---|
-| `GET /muscles` | List all muscle groups |
-| `GET /muscles/{slug}/exercises?goal=&category=` | Primary and secondary exercises for a muscle |
-| `GET /exercises?category=&difficulty=` | All exercises, filterable |
-| `GET /goals` | Sets/reps/rest presets |
-| `POST /workouts/generate` | Generate a workout from muscles, goal, equipment, and count |
-| `POST /workouts/swap` | Get a replacement exercise, excluding ones already used |
+## API Overview
+
+| Method | Route | Auth |
+|--------|-------|------|
+| GET    | `/muscles`, `/exercises`, `/goals` | — |
+| GET    | `/muscles/{muscle}/exercises` | — |
+| POST   | `/workouts/generate`, `/workouts/swap` | — |
+| POST   | `/auth/register`, `/auth/login` | — |
+| GET    | `/auth/me` | ✓ |
+| GET/POST/DELETE | `/saved-workouts` | ✓ |
+| GET/POST/DELETE | `/sessions` | ✓ |
 
 ## Roadmap
 
-- [x] Exercise Map: browse muscles and see exercises
-- [x] Deployment (Vercel + Railway)
-- [x] Backend tests + CI
-- [x] Workout Builder: generate workouts by muscle, goal, and equipment
-- [x] PostgreSQL connected and seeded
-- [ ] User accounts and saved workouts
-- [ ] Workout Log: PRs, progress graphs, weekly muscle heatmap
-- [ ] Mobile layout
+- [x] Exercise Map
+- [x] Workout Builder
+- [x] Postgres + Alembic
+- [x] Auth
+- [x] Saved workouts
+- [x] Mobile layout MVP
+- [ ] Workout Log
+- [ ] PR tracking + progress graphs
+- [ ] Weekly muscle heatmapd
