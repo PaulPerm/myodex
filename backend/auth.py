@@ -5,8 +5,8 @@ import bcrypt
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import select, or_
+from pydantic import BaseModel, Field
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from db import get_db
@@ -21,14 +21,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 class RegisterIn(BaseModel):
-    email: EmailStr
-    username: str = Field(min_length=3, max_length=50)
+    # letters, numbers, underscores, dots and dashes only
+    username: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9_.-]+$")
     password: str = Field(min_length=8, max_length=72)
 
 
 class UserOut(BaseModel):
     id: int
-    email: EmailStr
     username: str
     model_config = {"from_attributes": True}
 
@@ -51,6 +50,11 @@ def create_token(user_id: int) -> str:
     return jwt.encode({"sub": str(user_id), "exp": exp}, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def find_user(db: Session, username: str) -> User | None:
+    # usernames are matched without caring about capitals: "Paul" and "paul" are the same account
+    return db.scalar(select(User).where(func.lower(User.username) == username.lower()))
+
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     creds_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -70,12 +74,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 @router.post("/register", response_model=TokenOut, status_code=201)
 def register(data: RegisterIn, db: Session = Depends(get_db)):
-    exists = db.scalar(
-        select(User).where(or_(User.email == data.email, User.username == data.username))
-    )
-    if exists:
-        raise HTTPException(400, "Email or username already taken")
-    user = User(email=data.email, username=data.username, hashed_password=hash_password(data.password))
+    if find_user(db, data.username):
+        raise HTTPException(400, "That username is taken")
+    user = User(username=data.username, hashed_password=hash_password(data.password))
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -84,11 +85,9 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenOut)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.scalar(
-        select(User).where(or_(User.email == form.username, User.username == form.username))
-    )
+    user = find_user(db, form.username)
     if not user or not verify_password(form.password, user.hashed_password):
-        raise HTTPException(401, "Incorrect credentials")
+        raise HTTPException(401, "Wrong username or password")
     return TokenOut(access_token=create_token(user.id))
 
 

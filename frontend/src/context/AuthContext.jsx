@@ -26,11 +26,11 @@ export function AuthProvider({ children }) {
     await saveTokenAndLoadUser(access_token)
   }
 
-  async function register(email, username, password) {
+  async function register(username, password) {
     const { access_token } = await apiFetch('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, username, password }),
+      body: JSON.stringify({ username, password }),
     })
     await saveTokenAndLoadUser(access_token)
   }

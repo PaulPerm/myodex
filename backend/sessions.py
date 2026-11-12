@@ -139,6 +139,38 @@ def list_sessions(db: Session = Depends(get_db), user: User = Depends(get_curren
     ]
 
 
+# NOTE: must stay above the "/{session_id}" routes, or "last-sets" is read as an id.
+@router.get("/last-sets")
+def last_sets(exercise_ids: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """For each exercise id, the sets from the user's most recent session that included it."""
+    try:
+        ids = [int(x) for x in exercise_ids.split(",") if x.strip()][:50]
+    except ValueError:
+        raise HTTPException(400, "exercise_ids must be comma-separated integers")
+
+    out = {}
+    for ex_id in ids:
+        last_id = db.scalar(
+            select(WorkoutSession.id)
+            .join(SessionSet, SessionSet.session_id == WorkoutSession.id)
+            .where(WorkoutSession.user_id == user.id, SessionSet.exercise_id == ex_id)
+            .order_by(WorkoutSession.performed_at.desc(), WorkoutSession.id.desc())
+            .limit(1)
+        )
+        if last_id is None:
+            continue
+        rows = db.scalars(
+            select(SessionSet)
+            .where(SessionSet.session_id == last_id, SessionSet.exercise_id == ex_id)
+            .order_by(SessionSet.set_number)
+        ).all()
+        out[ex_id] = [
+            {"weight_kg": float(r.weight_kg) if r.weight_kg is not None else None, "reps": r.reps}
+            for r in rows
+        ]
+    return out
+
+
 @router.get("/{session_id}", response_model=SessionOut)
 def get_session(session_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return session_out(load_owned(db, session_id, user))
