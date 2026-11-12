@@ -4,9 +4,8 @@ import MusclePanel from '../components/MusclePanel'
 import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { apiFetch } from '../api'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { useSession } from '../context/SessionContext'
+import { apiFetch, API_URL } from '../api'
 
 const GOALS = [
   { key: 'strength',    label: 'Strength' },
@@ -14,34 +13,29 @@ const GOALS = [
   { key: 'endurance',   label: 'Endurance' },
 ]
 
-const EQUIPMENT = [
-  { key: 'bodyweight',  label: 'Bodyweight' },
-  { key: 'free_weight', label: 'Free Weight' },
-  { key: 'machine',     label: 'Machine' },
-]
+const PER_MUSCLE = 2
 
 const chip = active =>
-  `uppercase tracking-widest text-xs font-bold px-3 md:px-4 py-2 border transition-colors ${
+  `flex-1 h-12 uppercase tracking-widest text-xs font-bold border transition-colors ${
     active
       ? 'bg-[#c0392b] text-white border-[#c0392b]'
-      : 'bg-transparent text-white/30 border-white/10 hover:text-white/60'
+      : 'bg-transparent text-white/50 border-white/15 hover:text-white/80'
   }`
 
-const label = 'text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2'
+const label = 'text-xs uppercase tracking-widest text-white/50 font-bold mb-2'
 
-const sideBtn = 'flex items-center justify-center px-2 mb-2 text-white/40 border border-white/10 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
+const sideBtn = 'flex items-center justify-center w-11 mb-2 text-white/60 border border-white/15 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
 
-export default function WorkoutBuilder() {
+export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
   const { user } = useAuth()
+  const { draft, start, setExpanded } = useSession()
   const [view, setView]               = useState('anterior')
   const [selected, setSelected]       = useState([])
   const [goal, setGoal]               = useState('hypertrophy')
-  const [categories, setCategories]   = useState([])
-  const [perMuscle, setPerMuscle]     = useState(2)
   const [workout, setWorkout]         = useState(null)
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState(null)
-  const [pools, setPools]             = useState({})     // muscle -> primary exercises
+  const [pools, setPools]             = useState({})     // muscle -> its exercises
   const [allExercises, setAll]        = useState(null)   // for search
   const [searchKey, setSearchKey]     = useState(null)   // "blockIdx-exIdx" being searched
   const [query, setQuery]             = useState('')
@@ -54,10 +48,6 @@ export default function WorkoutBuilder() {
     const slug = normalizeMuscle(muscleData.muscle)
     if (!slug) return
     setSelected(prev => prev.includes(slug) ? prev.filter(m => m !== slug) : [...prev, slug])
-  }
-
-  function toggleCategory(key) {
-    setCategories(prev => prev.includes(key) ? prev.filter(c => c !== key) : [...prev, key])
   }
 
   async function loadPools(muscles) {
@@ -82,17 +72,15 @@ export default function WorkoutBuilder() {
       const res = await fetch(`${API_URL}/workouts/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ muscles: selected, goal, categories, exercises_per_muscle: perMuscle }),
+        body: JSON.stringify({ muscles: selected, goal, categories: [], exercises_per_muscle: PER_MUSCLE }),
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
       setWorkout(data)
       loadPools(data.blocks.map(b => b.muscle))
-      if (window.innerWidth < 768) {
-        setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
-      }
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     } catch {
-      setError('Could not generate workout. Is the backend running?')
+      setError('Could not build the workout. Is the backend running?')
     } finally {
       setLoading(false)
     }
@@ -108,8 +96,7 @@ export default function WorkoutBuilder() {
     }))
   }
 
-  // Exercises this slot can cycle through: the muscle's pool, matching equipment,
-  // minus anything already used in another slot.
+  // Exercises this slot can cycle through: the muscle's list minus anything used in another slot.
   function optionsFor(blockIdx, exIdx) {
     const block = workout.blocks[blockIdx]
     const current = block.exercises[exIdx]
@@ -118,9 +105,7 @@ export default function WorkoutBuilder() {
         b.exercises.filter((_, j) => !(i === blockIdx && j === exIdx)).map(e => e.id)
       )
     )
-    const pool = (pools[block.muscle] || []).filter(e =>
-      (!categories.length || categories.includes(e.category)) && !usedElsewhere.has(e.id)
-    )
+    const pool = (pools[block.muscle] || []).filter(e => !usedElsewhere.has(e.id))
     if (!pool.some(e => e.id === current.id)) pool.unshift(current)
     return pool
   }
@@ -146,7 +131,7 @@ export default function WorkoutBuilder() {
     }
   }
 
-  function searchResults(blockIdx, exIdx) {
+  function searchResults(blockIdx) {
     const used = new Set(workout.blocks.flatMap(b => b.exercises.map(e => e.id)))
     const muscle = workout.blocks[blockIdx].muscle
     const q = query.trim().toLowerCase()
@@ -154,6 +139,20 @@ export default function WorkoutBuilder() {
       .filter(e => !used.has(e.id) && (!q || e.name.toLowerCase().includes(q)))
       .sort((a, b) => (b.target === muscle) - (a.target === muscle)) // this muscle first
       .slice(0, 8)
+  }
+
+  const defaultName = () => workout.blocks.map(b => formatMuscle(b.muscle)).join(' + ').slice(0, 100)
+
+  async function startWorkout() {
+    if (draft) return setExpanded(true) // one workout at a time
+    const exercises = workout.blocks
+      .flatMap(b => b.exercises)
+      .map(e => ({ id: e.id, name: e.name, target: e.target }))
+    await start(workoutName.trim() || defaultName(), exercises, {
+      setCount: parseInt(workout.preset.sets) || 3,
+      repsHint: workout.preset.reps,
+    })
+    onStarted()
   }
 
   async function saveWorkout() {
@@ -164,14 +163,13 @@ export default function WorkoutBuilder() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: workoutName.trim(),
+          name: workoutName.trim() || defaultName(),
           goal: workout.goal,
           preset: workout.preset,
           blocks: workout.blocks,
         }),
       })
-      setSaveMsg({ ok: true, text: 'Saved' })
-      setWorkoutName('')
+      setSaveMsg({ ok: true, text: 'Saved to My workouts' })
     } catch (err) {
       setSaveMsg({ ok: false, text: err.message })
     } finally {
@@ -180,242 +178,200 @@ export default function WorkoutBuilder() {
   }
 
   const mapData = selected.length ? [{ name: 'Selected', muscles: toMapMuscles(selected) }] : []
+  const hasExercises = workout?.blocks.some(b => b.exercises.length > 0)
 
   return (
-    <div className="flex flex-col md:min-h-[calc(100vh-4rem)]">
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6 flex-1">
+    <div className="p-3 md:p-6 max-w-xl mx-auto flex flex-col gap-4">
 
-        {/* Left card — muscle selection */}
-        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6 flex-1 min-w-0">
-          <div>
-            <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-              Select Targets
-            </h2>
-            <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
-              Tap muscles to add or remove them
-            </p>
-          </div>
+      <div className="flex items-center gap-1">
+        <button onClick={onBack} className="w-11 h-11 flex items-center justify-center text-white/70" aria-label="Back">
+          <ChevronLeft size={24} />
+        </button>
+        <h2 className="text-3xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>Build a workout</h2>
+      </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 flex-1">
-            <MusclePanel
-              view={view}
-              setView={setView}
-              data={mapData}
-              handleMuscleClick={toggleMuscle}
-              hint="Tap to select muscles"
-            />
-
-            <div className="flex flex-col gap-2 flex-1 sm:pt-2">
-              <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-1">
-                Selected ({selected.length})
-              </p>
-              {selected.length === 0 && (
-                <p className="text-xs uppercase tracking-widest text-white/20">None yet</p>
-              )}
-              <div className="flex flex-wrap sm:flex-col gap-2">
-                {selected.map(m => (
-                  <button
-                    key={m}
-                    onClick={() => toggleMuscle({ muscle: m })}
-                    className="flex justify-between gap-3 text-xs uppercase tracking-widest text-white/60 border border-white/10 px-3 py-2 hover:border-[#c0392b]/50 hover:text-white transition-colors"
-                  >
-                    {formatMuscle(m)} <span className="text-white/30">✕</span>
-                  </button>
-                ))}
-              </div>
-              {selected.length > 0 && (
-                <button
-                  onClick={() => setSelected([])}
-                  className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 mt-2 self-start"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
+      {/* Step 1 + 2 */}
+      <div className="flex flex-col gap-5 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4">
+        <div>
+          <p className={label}>1. What are you training?</p>
+          <MusclePanel
+            view={view}
+            setView={setView}
+            data={mapData}
+            handleMuscleClick={toggleMuscle}
+            hint="Tap muscles to select them"
+          />
+          <div className="flex flex-wrap gap-2 mt-3">
+            {selected.map(m => (
+              <button
+                key={m}
+                onClick={() => toggleMuscle({ muscle: m })}
+                className="flex items-center gap-2 h-11 px-3 text-xs uppercase tracking-widest text-white/80 border border-white/20"
+              >
+                {formatMuscle(m)} <X size={14} className="text-white/40" />
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Right card — options + results */}
-        <div className="flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6">
-          <h2 className="text-xl font-bold uppercase tracking-widest text-white mb-4" style={{ fontFamily: 'Bebas Neue' }}>
-            Workout Builder
-          </h2>
-
-          <p className={label}>Goal</p>
-          <div className="flex flex-wrap gap-2 mb-4">
+        <div>
+          <p className={label}>2. What is your goal?</p>
+          <div className="flex gap-2">
             {GOALS.map(g => (
               <button key={g.key} onClick={() => setGoal(g.key)} className={chip(goal === g.key)}>
                 {g.label}
               </button>
             ))}
           </div>
-
-          <p className={label}>Equipment</p>
-          <div className="flex flex-wrap gap-2 mb-4">
-            <button onClick={() => setCategories([])} className={chip(categories.length === 0)}>Any</button>
-            {EQUIPMENT.map(c => (
-              <button key={c.key} onClick={() => toggleCategory(c.key)} className={chip(categories.includes(c.key))}>
-                {c.label}
-              </button>
-            ))}
-          </div>
-
-          <p className={label}>Exercises per muscle</p>
-          <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setPerMuscle(n => Math.max(1, n - 1))} className={chip(false)}>−</button>
-            <span className="text-white text-lg w-6 text-center" style={{ fontFamily: 'Bebas Neue' }}>{perMuscle}</span>
-            <button onClick={() => setPerMuscle(n => Math.min(5, n + 1))} className={chip(false)}>+</button>
-          </div>
-
-          <button
-            onClick={generate}
-            disabled={selected.length === 0 || loading}
-            className="uppercase tracking-widest text-sm font-bold py-3 mb-6 bg-[#c0392b] text-white hover:bg-[#a93226] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ fontFamily: 'Bebas Neue' }}
-          >
-            {loading ? 'Generating...' : workout ? 'Regenerate' : 'Generate Workout'}
-          </button>
-
-          {/* Results */}
-          <div ref={resultsRef} className="scroll-mt-16 flex flex-col md:overflow-y-auto flex-1">
-            {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
-
-            {!workout && !error && (
-              <p className="text-sm uppercase tracking-widest text-white/20 text-center my-6 md:mt-10">
-                {selected.length ? 'Ready when you are' : 'Select at least one muscle'}
-              </p>
-            )}
-
-            {workout && (
-              <>
-                {user ? (
-                  <div className="mb-4">
-                    <div className="flex gap-2">
-                      <input
-                        value={workoutName}
-                        onChange={e => setWorkoutName(e.target.value)}
-                        placeholder="Name this workout..."
-                        maxLength={100}
-                        className="flex-1 min-w-0 bg-white/5 border border-white/10 px-4 py-2 text-base md:text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
-                      />
-                      <button
-                        onClick={saveWorkout}
-                        disabled={!workoutName.trim() || saving}
-                        className="uppercase tracking-widest text-xs font-bold px-4 py-2 border border-[#c0392b]/40 text-[#c0392b] hover:bg-[#c0392b]/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        {saving ? 'Saving...' : 'Save'}
-                      </button>
-                    </div>
-                    {saveMsg && (
-                      <p className={`text-[10px] uppercase tracking-widest mt-2 ${saveMsg.ok ? 'text-white/50' : 'text-[#c0392b]'}`}>
-                        {saveMsg.text}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-[10px] uppercase tracking-widest text-white/30 mb-4">
-                    Sign in to save workouts
-                  </p>
-                )}
-
-                <div className="flex justify-between sm:justify-start sm:gap-6 border border-white/10 px-4 py-3 mb-6 text-xs uppercase tracking-widest text-white/60">
-                  <span><span className="text-[#c0392b] font-bold">{workout.preset.sets}</span> sets</span>
-                  <span><span className="text-[#c0392b] font-bold">{workout.preset.reps}</span> reps</span>
-                  <span><span className="text-[#c0392b] font-bold">{workout.preset.rest}</span> rest</span>
-                </div>
-
-                {workout.blocks.map((block, i) => (
-                  <div key={block.muscle} className="mb-6">
-                    <h3 className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-3">
-                      {formatMuscle(block.muscle)}
-                    </h3>
-                    {block.exercises.length === 0 ? (
-                      <p className="text-xs uppercase tracking-widest text-white/20">No exercises match these filters</p>
-                    ) : (
-                      <>
-                        {block.exercises.map((ex, j) => {
-                          const key = `${i}-${j}`
-                          const opts = pools[block.muscle] ? optionsFor(i, j) : [ex]
-                          const pos = opts.findIndex(e => e.id === ex.id) + 1
-                          const canStep = opts.length > 1
-                          return (
-                            <div key={key}>
-                              <div className="flex items-stretch gap-2">
-                                <button onClick={() => step(i, j, -1)} disabled={!canStep} className={sideBtn} aria-label="Previous exercise">
-                                  <ChevronLeft size={16} />
-                                </button>
-                                <div className="flex-1 min-w-0">
-                                  <ExerciseCard exercise={ex} onClick={() => {}} />
-                                </div>
-                                <button onClick={() => step(i, j, 1)} disabled={!canStep} className={sideBtn} aria-label="Next exercise">
-                                  <ChevronRight size={16} />
-                                </button>
-                                <button
-                                  onClick={() => openSearch(key)}
-                                  className={`${sideBtn} ${searchKey === key ? 'text-white border-[#c0392b]/50' : ''}`}
-                                  aria-label="Search exercises"
-                                >
-                                  <Search size={16} />
-                                </button>
-                              </div>
-
-                              <p className="text-[10px] uppercase tracking-widest text-white/30 -mt-1 mb-2 pl-10">
-                                {canStep ? `${pos} / ${opts.length}` : 'No other options with these filters'}
-                              </p>
-
-                              {searchKey === key && (
-                                <div className="border border-white/10 p-3 mb-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <input
-                                      autoFocus
-                                      value={query}
-                                      onChange={e => setQuery(e.target.value)}
-                                      placeholder="Search any exercise..."
-                                      className="flex-1 min-w-0 bg-white/5 border border-white/10 px-3 py-2 text-base md:text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
-                                    />
-                                    <button onClick={() => setSearchKey(null)} className="text-white/40 hover:text-white p-1" aria-label="Close search">
-                                      <X size={16} />
-                                    </button>
-                                  </div>
-                                  {!allExercises ? (
-                                    <p className="text-[10px] uppercase tracking-widest text-white/20 p-2">Loading...</p>
-                                  ) : (
-                                    <div className="flex flex-col max-h-60 overflow-y-auto">
-                                      {searchResults(i, j).map(r => (
-                                        <button
-                                          key={r.id}
-                                          onClick={() => { replaceExercise(i, j, r); setSearchKey(null) }}
-                                          className="text-left px-2 py-2 text-xs uppercase tracking-widest text-white/70 hover:bg-white/5 hover:text-white border-b border-white/5"
-                                        >
-                                          {r.name}
-                                          <span className="text-white/30"> · {formatMuscle(r.target)}</span>
-                                        </button>
-                                      ))}
-                                      {searchResults(i, j).length === 0 && (
-                                        <p className="text-[10px] uppercase tracking-widest text-white/20 p-2">No matches</p>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                        {block.exercises.length < perMuscle && (
-                          <p className="text-[10px] uppercase tracking-widest text-white/30 mt-2">
-                            Only {block.exercises.length} available with these filters
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
         </div>
 
+        <button
+          onClick={generate}
+          disabled={selected.length === 0 || loading}
+          className={`h-14 text-2xl tracking-widest transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+            workout ? 'border border-white/60 text-white' : 'bg-[#c0392b] text-white hover:bg-[#a93226]'
+          }`}
+          style={{ fontFamily: 'Bebas Neue' }}
+        >
+          {loading ? 'Building...' : workout ? 'Rebuild' : selected.length ? 'Build workout' : 'Pick a muscle first'}
+        </button>
+        {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
       </div>
+
+      {/* Result */}
+      {workout && (
+        <div ref={resultsRef} className="scroll-mt-16 flex flex-col bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4">
+          <h3 className="text-2xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>Your workout</h3>
+          <p className="text-xs text-white/50 mb-4">
+            {workout.preset.sets} sets · {workout.preset.reps} reps · {workout.preset.rest} rest. Use the arrows to swap an exercise.
+          </p>
+
+          {workout.blocks.map((block, i) => (
+            <div key={block.muscle} className="mb-4">
+              <h4 className="text-xs uppercase tracking-widest text-white/50 font-bold mb-2">
+                {formatMuscle(block.muscle)}
+              </h4>
+              {block.exercises.length === 0 && (
+                <p className="text-xs text-white/40">No exercises found for this muscle</p>
+              )}
+              {block.exercises.map((ex, j) => {
+                const key = `${i}-${j}`
+                const opts = pools[block.muscle] ? optionsFor(i, j) : [ex]
+                const pos = opts.findIndex(e => e.id === ex.id) + 1
+                const canStep = opts.length > 1
+                return (
+                  <div key={key}>
+                    <div className="flex items-stretch gap-1.5">
+                      <button onClick={() => step(i, j, -1)} disabled={!canStep} className={sideBtn} aria-label="Previous exercise">
+                        <ChevronLeft size={18} />
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <ExerciseCard exercise={ex} onClick={() => {}} />
+                      </div>
+                      <button onClick={() => step(i, j, 1)} disabled={!canStep} className={sideBtn} aria-label="Next exercise">
+                        <ChevronRight size={18} />
+                      </button>
+                      <button
+                        onClick={() => openSearch(key)}
+                        className={`${sideBtn} ${searchKey === key ? 'text-white border-[#c0392b]/50' : ''}`}
+                        aria-label="Search exercises"
+                      >
+                        <Search size={16} />
+                      </button>
+                    </div>
+
+                    {canStep && (
+                      <p className="text-[10px] uppercase tracking-widest text-white/40 -mt-1 mb-2 text-center">
+                        {pos} of {opts.length}
+                      </p>
+                    )}
+
+                    {searchKey === key && (
+                      <div className="border border-white/10 p-3 mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <input
+                            autoFocus
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Search any exercise..."
+                            className="flex-1 min-w-0 h-11 bg-white/5 border border-white/10 px-3 text-base text-white placeholder-white/30 outline-none focus:border-white/30"
+                          />
+                          <button onClick={() => setSearchKey(null)} className="w-11 h-11 flex items-center justify-center text-white/60" aria-label="Close search">
+                            <X size={18} />
+                          </button>
+                        </div>
+                        {!allExercises ? (
+                          <p className="text-xs text-white/40 p-2">Loading...</p>
+                        ) : (
+                          <div className="flex flex-col max-h-60 overflow-y-auto">
+                            {searchResults(i).map(r => (
+                              <button
+                                key={r.id}
+                                onClick={() => { replaceExercise(i, j, r); setSearchKey(null) }}
+                                className="min-h-12 px-2 py-2 text-left text-sm uppercase tracking-widest text-white/80 hover:bg-white/5 border-b border-white/5"
+                              >
+                                {r.name}
+                                <span className="text-white/40"> · {formatMuscle(r.target)}</span>
+                              </button>
+                            ))}
+                            {searchResults(i).length === 0 && (
+                              <p className="text-xs text-white/40 p-2">No matches</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+
+          {hasExercises && (
+            <div className="flex flex-col gap-2 mt-2">
+              <button
+                onClick={startWorkout}
+                className="h-16 bg-[#c0392b] text-white text-2xl tracking-widest hover:bg-[#a93226] transition-colors"
+                style={{ fontFamily: 'Bebas Neue' }}
+              >
+                {draft ? 'Resume current workout' : 'Start workout'}
+              </button>
+
+              {user ? (
+                <div className="flex gap-2">
+                  <input
+                    value={workoutName}
+                    onChange={e => { setWorkoutName(e.target.value); setSaveMsg(null) }}
+                    placeholder={defaultName()}
+                    maxLength={100}
+                    aria-label="Workout name"
+                    className="flex-1 min-w-0 h-12 bg-white/5 border border-white/15 px-3 text-base text-white placeholder-white/30 outline-none focus:border-white/40"
+                  />
+                  <button
+                    onClick={saveWorkout}
+                    disabled={saving || saveMsg?.ok}
+                    className="h-12 px-4 border border-white/60 text-white text-xs font-bold uppercase tracking-widest disabled:opacity-40"
+                  >
+                    {saving ? 'Saving...' : 'Save for later'}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onSignIn}
+                  className="h-12 border border-white/60 text-white text-xs font-bold uppercase tracking-widest"
+                >
+                  Sign in to save for later
+                </button>
+              )}
+              {saveMsg && (
+                <p className={`text-xs uppercase tracking-widest ${saveMsg.ok ? 'text-white/60' : 'text-[#c0392b]'}`}>
+                  {saveMsg.text}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
