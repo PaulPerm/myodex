@@ -6,7 +6,7 @@ import SwipeRow, { ConfirmDialog } from '../components/SwipeRow'
 
 const fmt = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 
-const field = 'w-full min-w-0 h-11 bg-black border px-2 text-base text-center text-white placeholder-white/30 outline-none focus:border-white/50'
+const field = 'w-full min-w-0 h-11 border px-2 text-base text-center text-white placeholder-white/30 outline-none focus:border-white/50 transition-colors'
 const colLabel = 'text-[10px] uppercase tracking-widest text-white/40 font-bold text-center'
 
 export default function ActiveSession() {
@@ -96,6 +96,13 @@ export default function ActiveSession() {
     if (err) setError(err)
   }
 
+  // Nothing ticked yet: just close. Otherwise ask first.
+  function exit() {
+    const anyDone = draft.exercises.some(ex => ex.sets.some(s => s.done))
+    if (anyDone) setDiscarding(true)
+    else discard()
+  }
+
   const elapsed  = fmt(Math.max(0, Math.floor((now - draft.startedAt) / 1000)))
   const restLeft = Math.max(0, Math.ceil((restEnd - now) / 1000))
 
@@ -104,13 +111,13 @@ export default function ActiveSession() {
       <div className="flex flex-col h-full max-w-xl mx-auto">
 
         {/* Header */}
-        <header className="flex items-center gap-2 h-14 px-2 border-b border-white/10 shrink-0">
+        <header className="flex items-center gap-1 h-14 px-2 border-b border-white/10 shrink-0">
           <button
-            onClick={() => setExpanded(false)}
+            onClick={exit}
             className="w-11 h-11 flex items-center justify-center text-white/70"
-            aria-label="Minimise workout"
+            aria-label="Exit workout"
           >
-            <ChevronDown size={24} />
+            <X size={22} />
           </button>
           <div className="flex-1 min-w-0">
             <input
@@ -123,6 +130,13 @@ export default function ActiveSession() {
             />
             <p className="text-xs text-white/50">{elapsed}</p>
           </div>
+          <button
+            onClick={() => setExpanded(false)}
+            className="w-11 h-11 flex items-center justify-center text-white/70"
+            aria-label="Minimise workout"
+          >
+            <ChevronDown size={24} />
+          </button>
           <button
             onClick={onFinish}
             className="h-11 px-5 mr-1 bg-[#c0392b] text-white text-lg tracking-widest"
@@ -143,20 +157,35 @@ export default function ActiveSession() {
           {draft.exercises.map((ex, ei) => {
             const open = draft.open === ei
             const doneCount = ex.sets.filter(s => s.done).length
+            const complete = ex.sets.length > 0 && doneCount === ex.sets.length
             return (
-              <div key={`${ex.exercise_id}-${ei}`} className={`border ${open ? 'border-white/25' : 'border-white/10'}`}>
+              <div
+                key={`${ex.exercise_id}-${ei}`}
+                className={`border transition-colors ${
+                  complete ? 'border-white/5 opacity-60' : open ? 'border-white/25' : 'border-white/10'
+                }`}
+              >
 
                 <SwipeRow
                   onDelete={() => removeExercise(ei)}
                   confirmTitle="Remove exercise?"
                   confirmText={`${ex.name} and its sets will be removed from this workout.`}
+                  bg="bg-[#0f0f0f]"
                 >
                   <button
                     onClick={() => change(d => { d.open = open ? -1 : ei })}
                     className="w-full min-h-14 px-4 py-2 flex items-center justify-between gap-3 text-left"
                   >
-                    <span className="text-base font-bold uppercase tracking-widest text-white">{ex.name}</span>
-                    <span className="text-xs text-white/50 shrink-0">{doneCount} / {ex.sets.length}</span>
+                    <span className={`text-base font-bold uppercase tracking-widest ${complete ? 'text-white/60' : 'text-white'}`}>
+                      {ex.name}
+                    </span>
+                    {complete ? (
+                      <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[#e8e0d0] text-black" aria-label="Exercise complete">
+                        <Check size={18} strokeWidth={3} />
+                      </span>
+                    ) : (
+                      <span className="text-xs text-white/50 shrink-0">{doneCount} / {ex.sets.length}</span>
+                    )}
                   </button>
                 </SwipeRow>
 
@@ -171,19 +200,23 @@ export default function ActiveSession() {
 
                     {ex.sets.map((s, si) => {
                       const hint = hintFor(ex, si, unit, draft.repsHint)
-                      const border = s.invalid ? 'border-[#c0392b]' : 'border-white/15'
+                      const inputStyle = s.done
+                        ? 'bg-transparent border-transparent text-white/60'
+                        : s.invalid
+                          ? 'bg-black border-[#c0392b]'
+                          : 'bg-black border-white/15'
                       return (
                         <SwipeRow
                           key={si}
                           onDelete={() => removeSet(ei, si)}
                           confirmTitle="Delete set?"
                           confirmText={`Set ${si + 1} of ${ex.name}.`}
-                          bg={s.done ? 'bg-[#15220f]' : 'bg-[#0f0f0f]'}
+                          bg="bg-[#0f0f0f]"
                         >
                           <div className="grid grid-cols-[2rem_1fr_1fr_3rem] gap-2 items-center px-3 py-1">
                             <span className="text-sm font-bold text-white/70 text-center">{si + 1}</span>
                             <input
-                              className={`${field} ${border}`}
+                              className={`${field} ${inputStyle}`}
                               inputMode="decimal"
                               aria-label={`Weight in ${unit}`}
                               placeholder={hint.w || '-'}
@@ -191,7 +224,7 @@ export default function ActiveSession() {
                               onChange={e => setValue(ei, si, 'weight', e.target.value)}
                             />
                             <input
-                              className={`${field} ${border}`}
+                              className={`${field} ${inputStyle}`}
                               inputMode="numeric"
                               aria-label="Reps"
                               placeholder={hint.r || '-'}
@@ -202,7 +235,7 @@ export default function ActiveSession() {
                               onClick={() => check(ei, si)}
                               aria-label={s.done ? 'Mark set not done' : 'Mark set done'}
                               className={`h-11 flex items-center justify-center border ${
-                                s.done ? 'bg-[#3f8f3a] border-[#3f8f3a] text-white' : 'border-white/25 text-white/40'
+                                s.done ? 'bg-[#e8e0d0] border-[#e8e0d0] text-black' : 'border-white/25 text-white/40'
                               }`}
                             >
                               <Check size={20} strokeWidth={3} />
@@ -242,12 +275,6 @@ export default function ActiveSession() {
             </button>
           )}
 
-          <button
-            onClick={() => setDiscarding(true)}
-            className="h-11 shrink-0 text-xs uppercase tracking-widest text-white/40"
-          >
-            Discard workout
-          </button>
         </main>
 
         {/* Rest timer */}
