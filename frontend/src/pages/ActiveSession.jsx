@@ -141,7 +141,7 @@ export default function ActiveSession() {
         </header>
 
         {/* Exercises */}
-        <main className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 flex flex-col gap-3">
           {error && <p className="text-[13px] text-danger text-center">{error}</p>}
 
           <input

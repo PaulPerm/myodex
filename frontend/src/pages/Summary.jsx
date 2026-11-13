@@ -24,7 +24,7 @@ export default function Summary({ onSignIn, onDone }) {
   return (
     <div className="fixed inset-0 z-50 bg-bg text-label">
       <div className="flex flex-col h-full max-w-xl mx-auto">
-        <main className="flex-1 overflow-y-auto px-4 pt-12 pb-4 flex flex-col gap-6">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-12 pb-4 flex flex-col gap-6">
 
           <div className="flex flex-col items-center text-center gap-3">
             <span className="w-16 h-16 rounded-full bg-success flex items-center justify-center text-on-success">
