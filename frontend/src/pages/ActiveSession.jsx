@@ -15,6 +15,7 @@ export default function ActiveSession() {
   const [picking, setPicking]       = useState(draft.exercises.length === 0)
   const [error, setError]           = useState(null)
   const [discarding, setDiscarding] = useState(false)
+  const [typing, setTyping]         = useState(false) // keyboard open: hide the rest timer
 
   // clock for the elapsed time and rest countdown
   useEffect(() => {
@@ -109,13 +110,17 @@ export default function ActiveSession() {
   const restPct  = Math.min(100, (restLeft / REST_SECONDS) * 100)
 
   return (
-    <div className="fixed inset-0 z-50 bg-bg text-label">
-      <div className="flex flex-col h-full max-w-xl mx-auto">
+        <div
+          className="fixed inset-0 z-50 bg-bg text-label overflow-y-auto overscroll-contain"
+          onFocus={e => { if (e.target.tagName === 'INPUT') setTyping(true) }}
+          onBlur={e => { if (e.target.tagName === 'INPUT') setTyping(false) }}
+        >
+          <div className="min-h-full max-w-xl mx-auto flex flex-col">
 
         {/* Header: tap anywhere on the bar (except the buttons) to minimise */}
         <header
           onClick={() => setExpanded(false)}
-          className="relative flex items-center gap-1 h-16 px-2 shrink-0 cursor-pointer select-none"
+          className="sticky top-0 z-10 bg-bg flex items-center gap-1 h-16 px-2 shrink-0 cursor-pointer select-none"
           aria-label="Minimise workout"
         >
           <span className="absolute top-1.5 left-1/2 -translate-x-1/2 w-9 h-1 rounded-full bg-label-3/40" aria-hidden="true" />
@@ -141,7 +146,7 @@ export default function ActiveSession() {
         </header>
 
         {/* Exercises */}
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 flex flex-col gap-3">
+        <main className="flex-1 px-3 py-3 pb-6 flex flex-col gap-3">
           {error && <p className="text-[13px] text-danger text-center">{error}</p>}
 
           <input
@@ -276,8 +281,8 @@ export default function ActiveSession() {
         </main>
 
         {/* Rest timer */}
-        {restLeft > 0 && (
-          <div className="px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shrink-0">
+        {restLeft > 0 && !typing && (
+          <div className="sticky bottom-0 z-10 px-3 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div className="flex flex-col gap-2.5 rounded-3xl bg-timer text-timer-text px-4 py-3.5 shadow-lg">
               <div className="flex items-center gap-2">
                 <div className="flex-1">
