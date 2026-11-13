@@ -6,18 +6,18 @@ import { normalizeMuscle, formatMuscle, toMapMuscles } from '../utils/muscles'
 const CATEGORIES = [
   { key: 'all',         label: 'All' },
   { key: 'bodyweight',  label: 'Bodyweight' },
-  { key: 'free_weight', label: 'Free Weight' },
+  { key: 'free_weight', label: 'Free weight' },
   { key: 'machine',     label: 'Machine' },
 ]
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-const chip = active =>
-  `uppercase tracking-widest text-xs font-bold px-3 md:px-4 py-2 border transition-colors ${
-    active
-      ? 'bg-[#c0392b] text-white border-[#c0392b]'
-      : 'bg-transparent text-white/30 border-white/10 hover:text-white/60'
+const segment = active =>
+  `flex-1 h-9 px-2 rounded-[7px] text-[13px] font-semibold whitespace-nowrap transition-colors ${
+    active ? 'bg-surface-3 text-label shadow-sm' : 'text-label-2'
   }`
+
+const sectionLabel = 'text-[13px] uppercase tracking-wide text-label-3 px-1 mb-2'
 
 export default function ExerciseMap() {
   const [goal]                                  = useState('hypertrophy')
@@ -48,17 +48,12 @@ export default function ExerciseMap() {
       const url = `${API_URL}/muscles/${muscle}/exercises?goal=${currentGoal}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`
       const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch')
-      const json = await res.json()
-      setData(json)
+      setData(await res.json())
     } catch {
       setError('Could not load exercises. Is the backend running?')
     } finally {
       setLoading(false)
     }
-  }
-
-  function handleExerciseClick(exercise) {
-    setSelectedExercise(exercise)
   }
 
   function changeCategory(next) {
@@ -72,164 +67,92 @@ export default function ExerciseMap() {
     ? [{ name: selectedExercise.name, muscles: toMapMuscles([selectedExercise.target, ...selectedExercise.secondary]) }]
     : data ? [{ name: muscleLabel, muscles: toMapMuscles([activeMuscle]) }] : []
 
+  // what the info panel shows: the tapped exercise, or the tapped muscle
+  const primary = selectedExercise ? formatMuscle(selectedExercise.target) : muscleLabel
+  const secondary = selectedExercise
+    ? selectedExercise.secondary
+    : data
+      ? data.secondary.flatMap(ex => ex.secondary).filter((v, i, a) => a.indexOf(v) === i)
+      : []
+
   return (
-    <div className="flex flex-col md:min-h-[calc(100vh-4rem)]">
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6 p-3 md:p-6 flex-1">
+    <div className="px-4 pt-4 md:pt-8 flex flex-col gap-6">
+      <h1 className="text-[34px] font-bold tracking-tight text-label">Explore</h1>
 
-        {/* Left card — Anatomical Target Map */}
-        <div className="flex flex-col gap-4 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6 flex-1 min-w-0">
+      <div className="flex flex-col md:flex-row gap-6 md:items-start">
 
-          <div>
-            <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-              Anatomical Target Map
-            </h2>
-            <p className="text-xs text-white/30 uppercase tracking-widest mt-1">
-              Tap a muscle to see exercises
-            </p>
-          </div>
+        {/* Body map */}
+        <section className="flex-1 min-w-0 rounded-2xl bg-surface p-4 flex flex-col sm:flex-row gap-5">
+          <MusclePanel view={view} setView={setView} data={mapData} handleMuscleClick={handleMuscleClick} />
 
-          {/* Body map + recruitment index */}
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 flex-1">
-            <MusclePanel
-              view={view}
-              setView={setView}
-              data={mapData}
-              handleMuscleClick={handleMuscleClick}
-            />
-
-            {/* Recruitment index */}
-            <div className="flex flex-col gap-4 flex-1 sm:pt-2">
-              {!activeMuscle && (
-                <p className="hidden sm:block text-xs uppercase tracking-widest text-white/20 mt-4">
-                  Select a muscle to see recruitment
-                </p>
-              )}
-
-              {selectedExercise ? (
-                <>
+          <div className="flex-1 min-w-0 flex flex-col gap-4 sm:pt-12">
+            {!activeMuscle && (
+              <p className="hidden sm:block text-[15px] text-label-3">Tap a muscle to see what works it.</p>
+            )}
+            {primary && (
+              <>
+                <div>
+                  <p className="text-[13px] text-label-3">{selectedExercise ? 'Target' : 'Primary'}</p>
+                  <p className="text-[22px] font-bold tracking-tight text-label">{primary}</p>
+                  {selectedExercise && <p className="text-[15px] text-accent mt-0.5">{selectedExercise.name}</p>}
+                </div>
+                {secondary.length > 0 && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-2 sm:mb-3">Target</p>
-                    <p className="text-sm font-bold uppercase tracking-wide text-white">
-                      {formatMuscle(selectedExercise.target)}
-                    </p>
-                  </div>
-                  <div className="h-px bg-white/10" />
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2 sm:mb-3">Secondary</p>
-                    <div className="flex flex-wrap sm:flex-col gap-x-4 gap-y-2">
-                      {selectedExercise.secondary.map(muscle => (
-                        <p key={muscle} className="text-xs uppercase tracking-widest text-white/40">
-                          {formatMuscle(muscle)}
-                        </p>
+                    <p className="text-[13px] text-label-3 mb-1.5">Also works</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {secondary.map(m => (
+                        <span key={m} className="px-2.5 py-1 rounded-full bg-surface-2 text-[13px] text-label-2">
+                          {formatMuscle(m)}
+                        </span>
                       ))}
                     </div>
                   </div>
-                </>
-              ) : activeMuscle && data && (
-                <>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-2 sm:mb-3">Primary</p>
-                    <p className="text-sm font-bold uppercase tracking-wide text-white">{muscleLabel}</p>
-                  </div>
-                  <div className="h-px bg-white/10" />
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-2 sm:mb-3">Secondary</p>
-                    <div className="flex flex-wrap sm:flex-col gap-x-4 gap-y-2">
-                      {data.secondary
-                        .flatMap(ex => ex.secondary)
-                        .filter((v, i, a) => a.indexOf(v) === i)
-                        .map(muscle => (
-                          <p key={muscle} className="text-xs uppercase tracking-widest text-white/40">
-                            {formatMuscle(muscle)}
-                          </p>
-                        ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+                )}
+              </>
+            )}
           </div>
-        </div>
+        </section>
 
-        {/* Right card — Exercises */}
-        <div
-          ref={listRef}
-          className="scroll-mt-16 flex flex-col flex-1 min-w-0 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4 md:p-6"
-        >
-
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold uppercase tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-              Exercises
-            </h2>
-            <button className="text-xs uppercase tracking-widest text-[#c0392b] border border-[#c0392b]/40 px-3 py-1 hover:bg-[#c0392b]/10 transition-colors">
-              + Add Movement
-            </button>
-          </div>
-
-          {/* Search + filters */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            <input
-              type="text"
-              placeholder="Search exercises..."
-              className="w-full sm:w-auto sm:flex-1 min-w-0 bg-white/5 border border-white/10 px-4 py-2 text-xs uppercase tracking-widest text-white placeholder-white/20 outline-none focus:border-white/20"
-            />
-            <button onClick={() => changeCategory('all')} className={chip(category === 'all')}>
-              All
-            </button>
-            {CATEGORIES.filter(c => c.key !== 'all').map(c => (
-              <button
-                key={c.key}
-                onClick={() => changeCategory(c.key === category ? 'all' : c.key)}
-                className={chip(category === c.key)}
-              >
+        {/* Exercises */}
+        <section ref={listRef} className="scroll-mt-16 flex-1 min-w-0 flex flex-col">
+          <div className="flex p-0.5 rounded-[9px] bg-surface-2 mb-4 overflow-x-auto">
+            {CATEGORIES.map(c => (
+              <button key={c.key} onClick={() => changeCategory(c.key)} className={segment(category === c.key)}>
                 {c.label}
               </button>
             ))}
           </div>
 
-          {/* Exercise list */}
-          <div className="flex flex-col md:overflow-y-auto flex-1">
-            {!activeMuscle && (
-              <div className="text-center my-10 md:mt-20">
-                <p className="text-sm uppercase tracking-widest text-white/20">Select a muscle group</p>
-              </div>
-            )}
+          {!activeMuscle && (
+            <p className="text-[15px] text-label-3 text-center my-10">Pick a muscle on the body map</p>
+          )}
+          {activeMuscle && loading && <p className="text-[15px] text-label-3 px-1">Loading...</p>}
+          {activeMuscle && error && <p className="text-[15px] text-danger px-1">{error}</p>}
 
-            {activeMuscle && loading && (
-              <p className="text-xs uppercase tracking-widest text-white/20">Loading...</p>
-            )}
-
-            {activeMuscle && error && (
-              <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>
-            )}
-
-            {data && !loading && (
-              <>
-                {data.primary.length > 0 && (
-                  <>
-                    <h3 className="text-[10px] uppercase tracking-widest text-[#c0392b] font-bold mb-3">Primary</h3>
-                    <div className="flex flex-col mb-6">
-                      {data.primary.map(ex => (
-                        <ExerciseCard key={ex.id} exercise={ex} onClick={handleExerciseClick} />
-                      ))}
-                    </div>
-                  </>
-                )}
-                {data.secondary.length > 0 && (
-                  <>
-                    <h3 className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-3">Also works {muscleLabel}</h3>
-                    <div className="flex flex-col">
-                      {data.secondary.map(ex => (
-                        <ExerciseCard key={ex.id} exercise={ex} onClick={handleExerciseClick} />
-                      ))}
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
+          {data && !loading && (
+            <>
+              {data.primary.length > 0 && (
+                <div className="mb-6">
+                  <p className={sectionLabel}>Best for {muscleLabel}</p>
+                  {data.primary.map(ex => (
+                    <ExerciseCard key={ex.id} exercise={ex} onClick={setSelectedExercise} />
+                  ))}
+                </div>
+              )}
+              {data.secondary.length > 0 && (
+                <div>
+                  <p className={sectionLabel}>Also works {muscleLabel}</p>
+                  {data.secondary.map(ex => (
+                    <ExerciseCard key={ex.id} exercise={ex} onClick={setSelectedExercise} />
+                  ))}
+                </div>
+              )}
+              {data.primary.length === 0 && data.secondary.length === 0 && (
+                <p className="text-[15px] text-label-3 text-center my-6">No exercises with this filter</p>
+              )}
+            </>
+          )}
+        </section>
       </div>
     </div>
   )

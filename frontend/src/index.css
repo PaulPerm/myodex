@@ -1,22 +1,108 @@
 @import "tailwindcss";
 
-@theme {
-  --font-bebas: 'Bebas Neue', sans-serif;
-  --font-barlow: 'Barlow Condensed', sans-serif;
-  --color-iron: #0d0d0d;
-  --color-iron-light: #1c1a18;
-  --color-steel: #2a2826;
-  --color-chalk: #e8e0d0;
-  --color-rust: #c0392b;
-  --color-rust-dark: #8a2820;
+/* Clean direction. Two themes:
+   light = navy + coral, dark = raven + powder blue + poppy.
+   Components only use the names in @theme; the values come from the theme blocks below. */
+
+@theme inline {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-separator: var(--separator);
+  --color-label: var(--label);
+  --color-label-2: var(--label-2);
+  --color-label-3: var(--label-3);
+  --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-on-accent: var(--on-accent);
+  --color-success: var(--success);
+  --color-on-success: var(--on-success);
+  --color-done-row: var(--done-row);
+  --color-danger: var(--danger);
+  --color-timer: var(--timer);
+  --color-timer-text: var(--timer-text);
+  --color-timer-sub: var(--timer-sub);
+  --color-timer-btn: var(--timer-btn);
+  --color-timer-btn-text: var(--timer-btn-text);
+  --color-timer-skip: var(--timer-skip);
+  --color-timer-skip-text: var(--timer-skip-text);
+  --color-timer-bar: var(--timer-bar);
 }
 
-body{
-  background-color: #0d0d0d;
-  font-family: 'Barlow Condensed', sans-serif;
-  background-image: url('/darkbg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+/* Light: navy + coral */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eaf5f9;
+  --surface: #ffffff;
+  --surface-2: #d9eef5;
+  --surface-3: #ffffff;
+  --separator: #cfe3ec;
+  --label: #002941;
+  --label-2: #4a6676;
+  --label-3: #52697a;
+  --accent: #c43d3d;        /* coral, darkened so it reads as text */
+  --accent-fill: #fd6e6e;   /* coral buttons */
+  --on-accent: #002941;
+  --success: #002941;       /* "done" ticks */
+  --on-success: #b6dfed;
+  --done-row: #d9eef5;
+  --danger: #c62828;
+  /* rest timer: powder-blue card */
+  --timer: #b0e0e6;
+  --timer-text: #18181b;
+  --timer-sub: #18181b;
+  --timer-btn: #8fc9d1;
+  --timer-btn-text: #18181b;
+  --timer-skip: #18181b;
+  --timer-skip-text: #f2f2f0;
+  --timer-bar: #e35335;
+}
+
+/* Dark: raven + powder blue + poppy */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18181b;
+  --surface: #232327;
+  --surface-2: #2e2e33;
+  --surface-3: #3a3a40;
+  --separator: #34343a;
+  --label: #f2f2f0;
+  --label-2: #b4b4bb;
+  --label-3: #9a9aa2;
+  --accent: #ff6a4d;        /* poppy, brightened so it reads as text */
+  --accent-fill: #e35335;   /* poppy buttons */
+  --on-accent: #18181b;
+  --success: #b0e0e6;       /* powder blue ticks */
+  --on-success: #18181b;
+  --done-row: #2b3a3d;
+  --danger: #ff6a5a;
+  /* rest timer: navy card with coral */
+  --timer: #002941;
+  --timer-text: #ffffff;
+  --timer-sub: #b6dfed;
+  --timer-btn: #0d3a55;
+  --timer-btn-text: #eaf5f9;
+  --timer-skip: #fd6e6e;
+  --timer-skip-text: #002941;
+  --timer-bar: #fd6e6e;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+::placeholder {
+  color: var(--label-3);
+  opacity: 1;
 }

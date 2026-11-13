@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Check, ChevronDown, Plus, Search, X } from 'lucide-react'
+import { Check, Plus, Search, X } from 'lucide-react'
 import { useSession, hintFor, REST_SECONDS } from '../context/SessionContext'
 import { API_URL } from '../api'
 import SwipeRow, { ConfirmDialog } from '../components/SwipeRow'
 
 const fmt = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 
-const field = 'w-full min-w-0 h-11 border px-2 text-base text-center text-white placeholder-white/30 outline-none focus:border-white/50 transition-colors'
-const colLabel = 'text-[10px] uppercase tracking-widest text-white/40 font-bold text-center'
+const field = 'w-full min-w-0 h-11 rounded-lg px-2 font-mono text-[17px] text-center text-label outline-none transition-colors focus:ring-2 focus:ring-accent'
+const colLabel = 'text-[13px] text-label-3 text-center'
 
 export default function ActiveSession() {
   const { draft, setDraft, unit, restEnd, setRestEnd, finish, discard, setExpanded, addExercise } = useSession()
@@ -103,66 +103,68 @@ export default function ActiveSession() {
     else discard()
   }
 
+  const setsDone = draft.exercises.reduce((n, ex) => n + ex.sets.filter(x => x.done).length, 0)
   const elapsed  = fmt(Math.max(0, Math.floor((now - draft.startedAt) / 1000)))
   const restLeft = Math.max(0, Math.ceil((restEnd - now) / 1000))
+  const restPct  = Math.min(100, (restLeft / REST_SECONDS) * 100)
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0d0d0d] text-[#e8e0d0]">
+    <div className="fixed inset-0 z-50 bg-bg text-label">
       <div className="flex flex-col h-full max-w-xl mx-auto">
 
-        {/* Header */}
-        <header className="flex items-center gap-1 h-14 px-2 border-b border-white/10 shrink-0">
+        {/* Header: tap anywhere on the bar (except the buttons) to minimise */}
+        <header
+          onClick={() => setExpanded(false)}
+          className="relative flex items-center gap-1 h-16 px-2 shrink-0 cursor-pointer select-none"
+          aria-label="Minimise workout"
+        >
+          <span className="absolute top-1.5 left-1/2 -translate-x-1/2 w-9 h-1 rounded-full bg-label-3/40" aria-hidden="true" />
           <button
-            onClick={exit}
-            className="w-11 h-11 flex items-center justify-center text-white/70"
+            onClick={e => { e.stopPropagation(); exit() }}
+            className="w-11 h-11 flex items-center justify-center"
             aria-label="Exit workout"
           >
-            <X size={22} />
+            <span className="w-9 h-9 rounded-full bg-surface flex items-center justify-center text-label-2 shadow-sm">
+              <X size={16} strokeWidth={2.5} />
+            </span>
           </button>
-          <div className="flex-1 min-w-0">
-            <input
-              value={draft.name}
-              onChange={e => change(d => { d.name = e.target.value })}
-              placeholder="Workout name"
-              maxLength={100}
-              aria-label="Workout name"
-              className="w-full bg-transparent text-base font-bold uppercase tracking-widest text-white placeholder-white/30 outline-none"
-            />
-            <p className="text-xs text-white/50">{elapsed}</p>
+          <div className="flex-1 min-w-0 text-center">
+            <p className="text-[17px] font-semibold text-label truncate">{draft.name || 'Workout'}</p>
+            <p className="font-mono text-[13px] text-label-2">{elapsed} · {setsDone} sets</p>
           </div>
           <button
-            onClick={() => setExpanded(false)}
-            className="w-11 h-11 flex items-center justify-center text-white/70"
-            aria-label="Minimise workout"
-          >
-            <ChevronDown size={24} />
-          </button>
-          <button
-            onClick={onFinish}
-            className="h-11 px-5 mr-1 bg-[#c0392b] text-white text-lg tracking-widest"
-            style={{ fontFamily: 'Bebas Neue' }}
+            onClick={e => { e.stopPropagation(); onFinish() }}
+            className="h-11 px-5 mr-1 rounded-full bg-accent-fill text-on-accent text-[15px] font-bold active:opacity-80"
           >
             Finish
           </button>
         </header>
 
         {/* Exercises */}
-        <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
-          {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+        <main className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3">
+          {error && <p className="text-[13px] text-danger text-center">{error}</p>}
 
-          {draft.exercises.length === 0 && (
-            <p className="text-sm text-white/40 text-center my-6">No exercises yet. Add your first one below.</p>
+          <input
+            value={draft.name}
+            onChange={e => change(d => { d.name = e.target.value })}
+            placeholder="Name this workout (optional)"
+            maxLength={100}
+            aria-label="Workout name"
+            className="h-11 shrink-0 px-4 rounded-xl bg-transparent text-[15px] text-label outline-none focus:bg-surface"
+          />
+
+          {draft.exercises.length === 0 && !picking && (
+            <p className="text-[15px] text-label-3 text-center my-6">No exercises yet. Add your first one below.</p>
           )}
 
           {draft.exercises.map((ex, ei) => {
             const open = draft.open === ei
-            const doneCount = ex.sets.filter(s => s.done).length
-            const complete = ex.sets.length > 0 && doneCount === ex.sets.length
+            const complete = ex.sets.length > 0 && ex.sets.every(s => s.done)
             return (
               <div
                 key={`${ex.exercise_id}-${ei}`}
-                className={`border transition-colors ${
-                  complete ? 'border-white/5 opacity-60' : open ? 'border-white/25' : 'border-white/10'
+                className={`rounded-2xl overflow-hidden transition-opacity ${
+                  complete ? 'bg-done-row opacity-75' : 'bg-surface shadow-sm'
                 }`}
               >
 
@@ -170,28 +172,26 @@ export default function ActiveSession() {
                   onDelete={() => removeExercise(ei)}
                   confirmTitle="Remove exercise?"
                   confirmText={`${ex.name} and its sets will be removed from this workout.`}
-                  bg="bg-[#0f0f0f]"
+                  bg={complete ? 'bg-done-row' : 'bg-surface'}
                 >
                   <button
                     onClick={() => change(d => { d.open = open ? -1 : ei })}
-                    className="w-full min-h-14 px-4 py-2 flex items-center justify-between gap-3 text-left"
+                    className="w-full min-h-14 px-4 py-3 flex items-center justify-between gap-3 text-left"
                   >
-                    <span className={`text-base font-bold uppercase tracking-widest ${complete ? 'text-white/60' : 'text-white'}`}>
+                    <span className={`${open ? 'text-[18px] font-bold' : 'text-[16px] font-semibold'} text-label`}>
                       {ex.name}
                     </span>
-                    {complete ? (
-                      <span className="w-7 h-7 shrink-0 flex items-center justify-center bg-[#e8e0d0] text-black" aria-label="Exercise complete">
-                        <Check size={18} strokeWidth={3} />
+                    {complete && (
+                      <span className="w-7 h-7 shrink-0 rounded-full bg-success flex items-center justify-center text-on-success" aria-label="Exercise complete">
+                        <Check size={14} strokeWidth={3.5} />
                       </span>
-                    ) : (
-                      <span className="text-xs text-white/50 shrink-0">{doneCount} / {ex.sets.length}</span>
                     )}
                   </button>
                 </SwipeRow>
 
                 {open && (
-                  <div className="pb-3 bg-[#0f0f0f]">
-                    <div className="grid grid-cols-[2rem_1fr_1fr_3rem] gap-2 px-3 pb-1">
+                  <div className="pb-3">
+                    <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem] gap-2 px-4 pb-1">
                       <span className={colLabel}>Set</span>
                       <span className={colLabel}>{unit}</span>
                       <span className={colLabel}>Reps</span>
@@ -201,25 +201,25 @@ export default function ActiveSession() {
                     {ex.sets.map((s, si) => {
                       const hint = hintFor(ex, si, unit, draft.repsHint)
                       const inputStyle = s.done
-                        ? 'bg-transparent border-transparent text-white/60'
+                        ? 'bg-transparent font-medium'
                         : s.invalid
-                          ? 'bg-black border-[#c0392b]'
-                          : 'bg-black border-white/15'
+                          ? 'bg-surface-2 ring-2 ring-danger'
+                          : 'bg-surface-2'
                       return (
                         <SwipeRow
                           key={si}
                           onDelete={() => removeSet(ei, si)}
                           confirmTitle="Delete set?"
                           confirmText={`Set ${si + 1} of ${ex.name}.`}
-                          bg="bg-[#0f0f0f]"
+                          bg={s.done ? 'bg-done-row' : 'bg-surface'}
                         >
-                          <div className="grid grid-cols-[2rem_1fr_1fr_3rem] gap-2 items-center px-3 py-1">
-                            <span className="text-sm font-bold text-white/70 text-center">{si + 1}</span>
+                          <div className="grid grid-cols-[2rem_1fr_1fr_2.75rem] gap-2 items-center px-4 py-1">
+                            <span className="font-mono text-[15px] text-label-2 text-center">{si + 1}</span>
                             <input
                               className={`${field} ${inputStyle}`}
                               inputMode="decimal"
                               aria-label={`Weight in ${unit}`}
-                              placeholder={hint.w || '-'}
+                              placeholder={hint.w || '–'}
                               value={s.weight}
                               onChange={e => setValue(ei, si, 'weight', e.target.value)}
                             />
@@ -227,15 +227,15 @@ export default function ActiveSession() {
                               className={`${field} ${inputStyle}`}
                               inputMode="numeric"
                               aria-label="Reps"
-                              placeholder={hint.r || '-'}
+                              placeholder={hint.r || '–'}
                               value={s.reps}
                               onChange={e => setValue(ei, si, 'reps', e.target.value)}
                             />
                             <button
                               onClick={() => check(ei, si)}
                               aria-label={s.done ? 'Mark set not done' : 'Mark set done'}
-                              className={`h-11 flex items-center justify-center border ${
-                                s.done ? 'bg-[#e8e0d0] border-[#e8e0d0] text-black' : 'border-white/25 text-white/40'
+                              className={`h-11 rounded-lg flex items-center justify-center transition-colors ${
+                                s.done ? 'bg-success text-on-success' : 'bg-surface-2 text-label-3'
                               }`}
                             >
                               <Check size={20} strokeWidth={3} />
@@ -245,12 +245,12 @@ export default function ActiveSession() {
                       )
                     })}
 
-                    <div className="px-3 pt-2">
+                    <div className="px-4 pt-2">
                       <button
                         onClick={() => addSet(ei)}
-                        className="w-full h-11 flex items-center justify-center gap-1 border border-dashed border-white/20 text-xs font-bold uppercase tracking-widest text-white/60"
+                        className="w-full h-11 rounded-lg bg-surface-2 flex items-center justify-center gap-1.5 text-[15px] font-semibold text-label-2 active:bg-surface-3"
                       >
-                        <Plus size={14} /> Add set
+                        <Plus size={16} strokeWidth={2.5} /> Add set
                       </button>
                     </div>
                   </div>
@@ -268,25 +268,30 @@ export default function ActiveSession() {
           ) : (
             <button
               onClick={() => setPicking(true)}
-              className="h-12 shrink-0 border border-white/40 text-white text-lg tracking-widest"
-              style={{ fontFamily: 'Bebas Neue' }}
+              className="h-[52px] shrink-0 rounded-full border-2 border-dashed border-label-3/40 text-label text-[16px] font-semibold flex items-center justify-center gap-2 active:bg-surface"
             >
-              + Add exercise
+              <Plus size={20} strokeWidth={2.5} /> Add exercise
             </button>
           )}
-
         </main>
 
         {/* Rest timer */}
         {restLeft > 0 && (
-          <div className="flex items-center gap-2 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-[#161514] border-t-2 border-[#c0392b] shrink-0">
-            <div className="flex-1">
-              <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold">Rest</p>
-              <p className="text-4xl leading-none text-white" style={{ fontFamily: 'Bebas Neue' }}>{fmt(restLeft)}</p>
+          <div className="px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shrink-0">
+            <div className="flex flex-col gap-2.5 rounded-3xl bg-timer text-timer-text px-4 py-3.5 shadow-lg">
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <p className="text-[13px] font-semibold text-timer-sub">Rest</p>
+                  <p className="font-mono text-[30px] font-medium leading-tight">{fmt(restLeft)}</p>
+                </div>
+                <button onClick={() => setRestEnd(restEnd - 15000)} className="w-14 h-11 rounded-full bg-timer-btn text-timer-btn-text font-mono text-[15px]">−15</button>
+                <button onClick={() => setRestEnd(restEnd + 15000)} className="w-14 h-11 rounded-full bg-timer-btn text-timer-btn-text font-mono text-[15px]">+15</button>
+                <button onClick={() => setRestEnd(0)} className="w-16 h-11 rounded-full bg-timer-skip text-timer-skip-text text-[15px] font-bold">Skip</button>
+              </div>
+              <div className="h-1.5 rounded-full bg-timer-btn overflow-hidden" aria-hidden="true">
+                <div className="h-full rounded-full bg-timer-bar transition-[width] duration-1000 ease-linear" style={{ width: `${restPct}%` }} />
+              </div>
             </div>
-            <button onClick={() => setRestEnd(restEnd - 15000)} className="w-14 h-12 border border-white/25 text-white font-bold">-15</button>
-            <button onClick={() => setRestEnd(restEnd + 15000)} className="w-14 h-12 border border-white/25 text-white font-bold">+15</button>
-            <button onClick={() => setRestEnd(0)} className="w-16 h-12 bg-[#e8e0d0] text-black text-xs font-bold uppercase tracking-widest">Skip</button>
           </div>
         )}
       </div>
@@ -321,32 +326,32 @@ function ExercisePicker({ exclude, onPick, onClose }) {
     .slice(0, 30)
 
   return (
-    <div className="border border-white/15 p-3 shrink-0">
+    <div className="rounded-2xl bg-surface p-3 shrink-0">
       <div className="flex items-center gap-2 mb-2">
-        <Search size={16} className="text-white/40 shrink-0" />
-        <input
-          autoFocus
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search exercises..."
-          className="flex-1 min-w-0 h-11 bg-black border border-white/15 px-3 text-base text-white placeholder-white/30 outline-none focus:border-white/50"
-        />
-        <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-white/60" aria-label="Close">
-          <X size={18} />
-        </button>
+        <div className="flex-1 min-w-0 h-10 rounded-xl bg-surface-2 flex items-center gap-2 px-3">
+          <Search size={16} className="text-label-3 shrink-0" />
+          <input
+            autoFocus
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search exercises"
+            className="flex-1 min-w-0 bg-transparent text-[17px] text-label outline-none"
+          />
+        </div>
+        <button onClick={onClose} className="h-11 px-2 text-[17px] text-accent">Cancel</button>
       </div>
-      {!all && <p className="text-xs text-white/40 p-2">Loading...</p>}
-      <div className="flex flex-col max-h-72 overflow-y-auto">
+      {!all && <p className="text-[15px] text-label-3 p-2">Loading...</p>}
+      <div className="flex flex-col max-h-72 overflow-y-auto divide-y divide-separator">
         {results.map(e => (
           <button
             key={e.id}
             onClick={() => onPick(e)}
-            className="min-h-12 px-2 py-2 text-left text-sm uppercase tracking-widest text-white/80 border-b border-white/5 hover:bg-white/5"
+            className="min-h-12 px-2 py-2 text-left text-[17px] text-label active:bg-surface-2"
           >
             {e.name}
           </button>
         ))}
-        {all && results.length === 0 && <p className="text-xs text-white/40 p-2">No matches</p>}
+        {all && results.length === 0 && <p className="text-[15px] text-label-3 p-2">No matches</p>}
       </div>
     </div>
   )

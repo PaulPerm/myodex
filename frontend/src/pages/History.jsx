@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSession, fromKg, round1 } from '../context/SessionContext'
 import { apiFetch } from '../api'
@@ -32,24 +32,25 @@ export default function History({ onSignIn }) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-3">
-      <h2 className="text-4xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>History</h2>
+    <div className="px-4 pt-4 md:pt-8 max-w-xl mx-auto flex flex-col gap-3">
+      <h1 className="text-[34px] font-bold tracking-tight text-label mb-1">History</h1>
 
-      {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+      {error && <p className="text-[13px] text-danger px-1">{error}</p>}
 
       {!user && (
         <button
           onClick={onSignIn}
-          className="h-14 px-4 text-left text-sm text-white/60 bg-black/80 border border-white/10"
+          className="w-full min-h-14 px-4 py-3 rounded-xl bg-surface flex items-center justify-between gap-3 text-left"
         >
-          Sign in to see your past workouts
+          <span className="text-[15px] text-label-2">Sign in to see your past workouts</span>
+          <ChevronRight size={18} className="text-label-3 shrink-0" />
         </button>
       )}
 
-      {user && loading && <p className="text-xs uppercase tracking-widest text-white/40">Loading...</p>}
+      {user && loading && <p className="text-[15px] text-label-3 px-1">Loading...</p>}
 
       {user && !loading && history.length === 0 && (
-        <p className="text-sm text-white/40 p-4 bg-black/80 border border-white/10">
+        <p className="text-[15px] text-label-3 px-4 py-4 rounded-xl bg-surface">
           No workouts yet. Your finished workouts show up here.
         </p>
       )}
@@ -81,8 +82,10 @@ function HistoryItem({ summary, unit, onDelete }) {
     g.sets.push(set)
   }
 
+  const date = new Date(summary.performed_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+
   return (
-    <div className="border border-white/10">
+    <div className="rounded-xl overflow-hidden bg-surface">
       <SwipeRow
         onDelete={onDelete}
         confirmTitle="Delete workout?"
@@ -90,27 +93,32 @@ function HistoryItem({ summary, unit, onDelete }) {
       >
         <button onClick={toggle} className="w-full min-h-16 px-4 py-3 flex items-center justify-between gap-3 text-left">
           <div className="min-w-0">
-            <p className="text-lg font-bold uppercase tracking-widest text-white truncate">{summary.name}</p>
-            <p className="text-xs text-white/50 mt-0.5">
-              {new Date(summary.performed_at).toLocaleDateString()} · {summary.exercise_count} exercises · {summary.set_count} sets
+            <p className="text-[17px] font-semibold text-label truncate">{summary.name}</p>
+            <p className="text-[13px] text-label-2 mt-0.5">
+              {date} · {summary.exercise_count} exercises · {summary.set_count} sets
             </p>
           </div>
-          {open ? <ChevronUp size={20} className="text-white/50 shrink-0" /> : <ChevronDown size={20} className="text-white/50 shrink-0" />}
+          <ChevronDown
+            size={20}
+            className={`text-label-3 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
         </button>
       </SwipeRow>
 
       {open && (
-        <div className="border-t border-white/10 px-4 py-4 bg-[#0f0f0f]">
-          {!detail && <p className="text-xs uppercase tracking-widest text-white/40">Loading...</p>}
+        <div className="border-t border-separator px-4 py-3">
+          {!detail && <p className="text-[15px] text-label-3">Loading...</p>}
           {groups.map(g => (
-            <div key={g.exercise_id} className="mb-3">
-              <p className="text-xs uppercase tracking-widest text-white font-bold mb-1">{g.name}</p>
+            <div key={g.exercise_id} className="py-2">
+              <p className="text-[15px] font-semibold text-accent mb-1">{g.name}</p>
               {g.sets.map(s => (
-                <p key={s.id} className="text-sm text-white/60 pl-2 py-0.5">
-                  {s.set_number}.{' '}
-                  {s.weight_kg !== null ? `${round1(fromKg(parseFloat(s.weight_kg), unit))} ${unit} x ` : ''}
-                  {s.reps}
-                </p>
+                <div key={s.id} className="flex gap-4 text-[15px] py-0.5">
+                  <span className="w-5 text-label-3 tabular-nums">{s.set_number}</span>
+                  <span className="text-label tabular-nums">
+                    {s.weight_kg !== null ? `${round1(fromKg(parseFloat(s.weight_kg), unit))} ${unit} × ` : ''}
+                    {s.reps}
+                  </span>
+                </div>
               ))}
             </div>
           ))}

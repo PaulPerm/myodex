@@ -5,14 +5,17 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext'
 import { SessionProvider } from './context/SessionContext'
+import { ThemeProvider } from './context/ThemeContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <SessionProvider>
-        <App />
-      </SessionProvider>
-      <Analytics />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <SessionProvider>
+          <App />
+        </SessionProvider>
+        <Analytics />
+      </AuthProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

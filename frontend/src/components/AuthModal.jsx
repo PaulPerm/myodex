@@ -50,60 +50,59 @@ export default function AuthModal({ onClose }) {
     setConfirm('')
   }
 
-  const input = 'w-full h-12 bg-white/5 border border-white/10 px-4 text-base md:text-sm tracking-wider text-white placeholder-white/30 outline-none focus:border-white/40'
+  // grouped-field look: rows share one rounded box, split by hairlines
+  const row = 'w-full h-12 bg-transparent px-4 text-[17px] text-label outline-none'
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/60" onClick={onClose}>
       <form
         onSubmit={handleSubmit}
         onClick={e => e.stopPropagation()}
-        className="relative w-full max-w-sm flex flex-col gap-4 bg-black/95 border border-white/10 p-6 md:p-8"
+        className="relative w-full sm:max-w-sm flex flex-col gap-4 bg-surface rounded-t-3xl sm:rounded-3xl px-5 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-2 right-2 w-11 h-11 flex items-center justify-center text-white/50 hover:text-white"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center text-label-2"
           aria-label="Close"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        <h2 className="text-3xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>
-          {isRegister ? 'Create Account' : 'Sign In'}
+        <h2 className="text-[28px] font-bold text-label tracking-tight">
+          {isRegister ? 'Create account' : 'Sign in'}
         </h2>
 
-        <input
-          className={input}
-          placeholder="Username"
-          aria-label="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          required
-          minLength={3}
-          maxLength={50}
-          autoComplete="username"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-        />
-
-        <input
-          className={input}
-          type="password"
-          placeholder="Password"
-          aria-label="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-          minLength={8}
-          maxLength={72}
-          autoComplete={isRegister ? 'new-password' : 'current-password'}
-        />
-
-        {isRegister && (
-          <div className="flex flex-col gap-1">
+        <div className="rounded-xl bg-surface-2 divide-y divide-separator overflow-hidden">
+          <input
+            className={row}
+            placeholder="Username"
+            aria-label="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            required
+            minLength={3}
+            maxLength={50}
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+          <input
+            className={row}
+            type="password"
+            placeholder="Password"
+            aria-label="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            minLength={8}
+            maxLength={72}
+            autoComplete={isRegister ? 'new-password' : 'current-password'}
+          />
+          {isRegister && (
             <input
-              className={`${input} ${mismatch ? 'border-[#c0392b] focus:border-[#c0392b]' : ''}`}
+              className={`${row} ${mismatch ? 'text-danger' : ''}`}
               type="password"
               placeholder="Confirm password"
               aria-label="Confirm password"
@@ -113,32 +112,27 @@ export default function AuthModal({ onClose }) {
               maxLength={72}
               autoComplete="new-password"
             />
-            {mismatch && (
-              <p className="text-xs uppercase tracking-widest text-[#c0392b]">Passwords do not match</p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
+
+        {mismatch && <p className="text-[13px] text-danger -mt-2 px-1">Passwords do not match</p>}
 
         {isRegister && (
-          <p className="text-xs text-white/40">
+          <p className="text-[13px] text-label-3 px-1 -mt-1">
             No email needed. There's no password reset, so keep your password somewhere safe.
           </p>
         )}
 
-        {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+        {error && <p className="text-[13px] text-danger px-1">{error}</p>}
 
         <button
           disabled={busy || mismatch}
-          className="h-12 bg-[#c0392b] text-white text-xs font-bold uppercase tracking-widest hover:bg-[#a93226] disabled:opacity-50"
+          className="h-[50px] rounded-xl bg-accent-fill text-on-accent text-[17px] font-semibold disabled:opacity-40"
         >
-          {busy ? '...' : isRegister ? 'Create account' : 'Sign in'}
+          {busy ? 'Please wait...' : isRegister ? 'Create account' : 'Sign in'}
         </button>
 
-        <button
-          type="button"
-          onClick={switchMode}
-          className="h-11 text-xs uppercase tracking-widest text-white/50 hover:text-white/80"
-        >
+        <button type="button" onClick={switchMode} className="h-11 text-[15px] text-accent">
           {isRegister ? 'Have an account? Sign in' : 'No account? Create one'}
         </button>
       </form>

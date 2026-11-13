@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ChevronRight, Sparkles, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSession } from '../context/SessionContext'
 import { apiFetch } from '../api'
@@ -44,73 +45,81 @@ export default function Train({ onBuild, onSignIn }) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-6">
+    <div className="px-4 pt-4 md:pt-8 max-w-xl mx-auto flex flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <h2 className="text-4xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>Train</h2>
+        <h1 className="text-[34px] font-bold tracking-tight text-label">Train</h1>
+
         <button
           onClick={guard(() => start('', []))}
-          className="h-16 bg-[#c0392b] text-white text-2xl tracking-widest hover:bg-[#a93226] transition-colors"
-          style={{ fontFamily: 'Bebas Neue' }}
+          className="h-[52px] rounded-xl bg-accent-fill text-on-accent text-[17px] font-semibold flex items-center justify-center gap-2 active:opacity-80"
         >
+          <Plus size={20} strokeWidth={2.5} />
           {draft ? 'Resume workout' : 'Start empty workout'}
         </button>
+
         <button
           onClick={onBuild}
-          className="h-14 border border-white/60 text-white text-xl tracking-widest bg-black/60 hover:bg-white/5 transition-colors"
-          style={{ fontFamily: 'Bebas Neue' }}
+          className="h-[52px] rounded-xl bg-surface text-accent text-[17px] font-semibold flex items-center justify-center gap-2 active:bg-surface-2"
         >
+          <Sparkles size={18} />
           Build a workout
         </button>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs uppercase tracking-widest text-white/50 font-bold">My workouts</h3>
+      <section className="flex flex-col gap-2">
+        <h2 className="text-[22px] font-bold tracking-tight text-label px-1">My workouts</h2>
 
-        {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+        {error && <p className="text-[13px] text-danger px-1">{error}</p>}
 
         {!user && (
           <button
             onClick={onSignIn}
-            className="h-14 px-4 text-left text-sm text-white/60 bg-black/80 border border-white/10"
+            className="w-full min-h-14 px-4 py-3 rounded-xl bg-surface flex items-center justify-between gap-3 text-left"
           >
-            Sign in to save workouts and see them here
+            <span className="text-[15px] text-label-2">Sign in to save workouts and see them here</span>
+            <ChevronRight size={18} className="text-label-3 shrink-0" />
           </button>
         )}
 
-        {user && loading && <p className="text-xs uppercase tracking-widest text-white/40">Loading...</p>}
+        {user && loading && <p className="text-[15px] text-label-3 px-1">Loading...</p>}
 
         {user && !loading && saved.length === 0 && (
-          <p className="text-sm text-white/40 p-4 bg-black/80 border border-white/10">
+          <p className="text-[15px] text-label-3 px-4 py-4 rounded-xl bg-surface">
             Nothing saved yet. Build a workout and save it.
           </p>
         )}
 
-        {saved.map(w => (
-          <SwipeRow
-            key={w.id}
-            onDelete={() => remove(w.id)}
-            confirmTitle="Delete workout?"
-            confirmText={`${w.name} will be removed from My workouts.`}
-            className="border border-white/10"
-          >
-            <div className="flex items-center justify-between gap-3 p-4">
-              <div className="min-w-0">
-                <p className="text-lg font-bold uppercase tracking-widest text-white truncate">{w.name}</p>
-                <p className="text-xs text-white/50 mt-0.5">
-                  {(w.blocks || []).reduce((n, b) => n + (b?.exercises?.length || 0), 0)} exercises · {w.goal}
-                </p>
-              </div>
-              <button
-                onClick={guard(() => startSaved(w))}
-                className="h-11 px-5 shrink-0 bg-[#c0392b] text-white text-lg tracking-widest"
-                style={{ fontFamily: 'Bebas Neue' }}
+        {saved.length > 0 && (
+          <div className="rounded-xl overflow-hidden bg-surface divide-y divide-separator">
+            {saved.map(w => (
+              <SwipeRow
+                key={w.id}
+                onDelete={() => remove(w.id)}
+                confirmTitle="Delete workout?"
+                confirmText={`${w.name} will be removed from My workouts.`}
               >
-                Start
-              </button>
-            </div>
-          </SwipeRow>
-        ))}
-      </div>
+                <div className="flex items-center justify-between gap-3 pl-4 pr-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-[17px] font-semibold text-label truncate">{w.name}</p>
+                    <p className="text-[13px] text-label-2 mt-0.5">
+                      {(w.blocks || []).reduce((n, b) => n + (b?.exercises?.length || 0), 0)} exercises · {w.goal}
+                    </p>
+                  </div>
+                  <button
+                    onClick={guard(() => startSaved(w))}
+                    className="h-11 px-5 shrink-0 rounded-full bg-surface-2 text-accent text-[15px] font-semibold active:bg-surface-3"
+                  >
+                    Start
+                  </button>
+                </div>
+              </SwipeRow>
+            ))}
+          </div>
+        )}
+        {saved.length > 0 && (
+          <p className="text-[13px] text-label-3 px-4">Swipe left on a workout to delete it.</p>
+        )}
+      </section>
     </div>
   )
 }

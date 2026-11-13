@@ -2,28 +2,25 @@ import { useRef, useState } from 'react'
 
 const WIDTH = 88 // px of the revealed Delete button
 
+// iOS-style alert
 export function ConfirmDialog({ title, text, confirmLabel = 'Delete', onConfirm, onCancel }) {
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4" onClick={onCancel}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-6" onClick={onCancel}>
       <div
         role="alertdialog"
         aria-modal="true"
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-xs bg-[#111] border border-white/10 p-5"
+        className="w-full max-w-[290px] rounded-2xl bg-surface-2 overflow-hidden text-center"
       >
-        <h3 className="text-xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>{title}</h3>
-        {text && <p className="text-sm text-white/60 mt-2">{text}</p>}
-        <div className="flex gap-2 mt-5">
-          <button
-            onClick={onCancel}
-            className="flex-1 h-12 border border-white/20 text-white/70 text-xs font-bold uppercase tracking-widest"
-          >
+        <div className="px-5 pt-5 pb-4">
+          <h3 className="text-[17px] font-semibold text-label">{title}</h3>
+          {text && <p className="text-[13px] text-label-2 mt-1">{text}</p>}
+        </div>
+        <div className="grid grid-cols-2 border-t border-separator">
+          <button onClick={onCancel} className="h-12 text-[17px] text-accent border-r border-separator">
             Cancel
           </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 h-12 bg-[#c0392b] text-white text-xs font-bold uppercase tracking-widest"
-          >
+          <button onClick={onConfirm} className="h-12 text-[17px] font-semibold text-danger">
             {confirmLabel}
           </button>
         </div>
@@ -33,7 +30,7 @@ export function ConfirmDialog({ title, text, confirmLabel = 'Delete', onConfirm,
 }
 
 // Swipe left to reveal Delete. Tapping Delete asks for confirmation first.
-export default function SwipeRow({ children, onDelete, confirmTitle = 'Delete this?', confirmText, bg = 'bg-[#0f0f0f]', className = '' }) {
+export default function SwipeRow({ children, onDelete, confirmTitle = 'Delete this?', confirmText, bg = 'bg-surface', className = '' }) {
   const [dx, setDx]                 = useState(0)
   const [dragging, setDragging]     = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -91,7 +88,7 @@ export default function SwipeRow({ children, onDelete, confirmTitle = 'Delete th
         tabIndex={open ? 0 : -1}
         aria-hidden={!open}
         style={{ width: WIDTH }}
-        className="absolute inset-y-0 right-0 bg-[#c0392b] text-white text-xs font-bold uppercase tracking-widest"
+        className="absolute inset-y-0 right-0 bg-danger text-white text-[15px] font-semibold"
       >
         Delete
       </button>
@@ -104,7 +101,7 @@ export default function SwipeRow({ children, onDelete, confirmTitle = 'Delete th
         onClickCapture={clickCapture}
         style={{
           transform: `translateX(${dx}px)`,
-          transition: dragging ? 'none' : 'transform 160ms ease-out',
+          transition: dragging ? 'none' : 'transform 200ms cubic-bezier(.2,.8,.2,1)',
           touchAction: 'pan-y',
         }}
         className={`relative ${bg}`}

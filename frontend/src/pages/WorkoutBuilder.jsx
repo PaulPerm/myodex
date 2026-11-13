@@ -15,16 +15,14 @@ const GOALS = [
 
 const PER_MUSCLE = 2
 
-const chip = active =>
-  `flex-1 h-12 uppercase tracking-widest text-xs font-bold border transition-colors ${
-    active
-      ? 'bg-[#c0392b] text-white border-[#c0392b]'
-      : 'bg-transparent text-white/50 border-white/15 hover:text-white/80'
+const segment = active =>
+  `flex-1 h-9 rounded-[7px] text-[13px] font-semibold transition-colors ${
+    active ? 'bg-surface-3 text-label shadow-sm' : 'text-label-2'
   }`
 
-const label = 'text-xs uppercase tracking-widest text-white/50 font-bold mb-2'
+const sectionLabel = 'text-[13px] uppercase tracking-wide text-label-3 px-1 mb-2'
 
-const sideBtn = 'flex items-center justify-center w-11 mb-2 text-white/60 border border-white/15 hover:text-white hover:border-[#c0392b]/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
+const roundBtn = 'w-11 h-11 shrink-0 rounded-full bg-surface flex items-center justify-center text-accent active:bg-surface-2 disabled:opacity-30 disabled:cursor-not-allowed'
 
 export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
   const { user } = useAuth()
@@ -181,19 +179,19 @@ export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
   const hasExercises = workout?.blocks.some(b => b.exercises.length > 0)
 
   return (
-    <div className="p-3 md:p-6 max-w-xl mx-auto flex flex-col gap-4">
+    <div className="px-4 pt-2 md:pt-6 max-w-xl mx-auto flex flex-col gap-6">
 
-      <div className="flex items-center gap-1">
-        <button onClick={onBack} className="w-11 h-11 flex items-center justify-center text-white/70" aria-label="Back">
-          <ChevronLeft size={24} />
+      <div>
+        <button onClick={onBack} className="h-11 -ml-2 pr-2 flex items-center text-[17px] text-accent">
+          <ChevronLeft size={26} /> Train
         </button>
-        <h2 className="text-3xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>Build a workout</h2>
+        <h1 className="text-[34px] font-bold tracking-tight text-label">Build a workout</h1>
       </div>
 
-      {/* Step 1 + 2 */}
-      <div className="flex flex-col gap-5 bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4">
-        <div>
-          <p className={label}>1. What are you training?</p>
+      {/* Step 1 */}
+      <section>
+        <p className={sectionLabel}>What are you training?</p>
+        <div className="rounded-2xl bg-surface p-4">
           <MusclePanel
             view={view}
             setView={setView}
@@ -201,58 +199,60 @@ export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
             handleMuscleClick={toggleMuscle}
             hint="Tap muscles to select them"
           />
-          <div className="flex flex-wrap gap-2 mt-3">
-            {selected.map(m => (
-              <button
-                key={m}
-                onClick={() => toggleMuscle({ muscle: m })}
-                className="flex items-center gap-2 h-11 px-3 text-xs uppercase tracking-widest text-white/80 border border-white/20"
-              >
-                {formatMuscle(m)} <X size={14} className="text-white/40" />
-              </button>
-            ))}
-          </div>
+          {selected.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {selected.map(m => (
+                <button
+                  key={m}
+                  onClick={() => toggleMuscle({ muscle: m })}
+                  className="flex items-center gap-1.5 h-9 pl-3 pr-2 rounded-full bg-accent/15 text-accent text-[15px] font-semibold"
+                >
+                  {formatMuscle(m)} <X size={14} strokeWidth={2.5} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+      </section>
 
-        <div>
-          <p className={label}>2. What is your goal?</p>
-          <div className="flex gap-2">
-            {GOALS.map(g => (
-              <button key={g.key} onClick={() => setGoal(g.key)} className={chip(goal === g.key)}>
-                {g.label}
-              </button>
-            ))}
-          </div>
+      {/* Step 2 */}
+      <section>
+        <p className={sectionLabel}>What's your goal?</p>
+        <div className="flex p-0.5 rounded-[9px] bg-surface-2">
+          {GOALS.map(g => (
+            <button key={g.key} onClick={() => setGoal(g.key)} className={segment(goal === g.key)}>
+              {g.label}
+            </button>
+          ))}
         </div>
+      </section>
 
+      <div className="flex flex-col gap-2">
         <button
           onClick={generate}
           disabled={selected.length === 0 || loading}
-          className={`h-14 text-2xl tracking-widest transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-            workout ? 'border border-white/60 text-white' : 'bg-[#c0392b] text-white hover:bg-[#a93226]'
+          className={`h-[52px] rounded-xl text-[17px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed ${
+            workout ? 'bg-surface text-accent' : 'bg-accent-fill text-on-accent active:opacity-80'
           }`}
-          style={{ fontFamily: 'Bebas Neue' }}
         >
           {loading ? 'Building...' : workout ? 'Rebuild' : selected.length ? 'Build workout' : 'Pick a muscle first'}
         </button>
-        {error && <p className="text-xs uppercase tracking-widest text-[#c0392b]">{error}</p>}
+        {error && <p className="text-[13px] text-danger text-center">{error}</p>}
       </div>
 
       {/* Result */}
       {workout && (
-        <div ref={resultsRef} className="scroll-mt-16 flex flex-col bg-black/90 backdrop-blur-md border border-white/10 rounded-sm p-4">
-          <h3 className="text-2xl tracking-widest text-white" style={{ fontFamily: 'Bebas Neue' }}>Your workout</h3>
-          <p className="text-xs text-white/50 mb-4">
-            {workout.preset.sets} sets · {workout.preset.reps} reps · {workout.preset.rest} rest. Use the arrows to swap an exercise.
+        <section ref={resultsRef} className="scroll-mt-16 flex flex-col">
+          <h2 className="text-[22px] font-bold tracking-tight text-label px-1">Your workout</h2>
+          <p className="text-[15px] text-label-2 px-1 mb-4">
+            {workout.preset.sets} sets · {workout.preset.reps} reps · {workout.preset.rest} rest
           </p>
 
           {workout.blocks.map((block, i) => (
             <div key={block.muscle} className="mb-4">
-              <h4 className="text-xs uppercase tracking-widest text-white/50 font-bold mb-2">
-                {formatMuscle(block.muscle)}
-              </h4>
+              <p className={sectionLabel}>{formatMuscle(block.muscle)}</p>
               {block.exercises.length === 0 && (
-                <p className="text-xs text-white/40">No exercises found for this muscle</p>
+                <p className="text-[15px] text-label-3 px-1">No exercises found for this muscle</p>
               )}
               {block.exercises.map((ex, j) => {
                 const key = `${i}-${j}`
@@ -260,62 +260,57 @@ export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
                 const pos = opts.findIndex(e => e.id === ex.id) + 1
                 const canStep = opts.length > 1
                 return (
-                  <div key={key}>
-                    <div className="flex items-stretch gap-1.5">
-                      <button onClick={() => step(i, j, -1)} disabled={!canStep} className={sideBtn} aria-label="Previous exercise">
-                        <ChevronLeft size={18} />
+                  <div key={key} className="mb-1">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => step(i, j, -1)} disabled={!canStep} className={roundBtn} aria-label="Previous exercise">
+                        <ChevronLeft size={20} />
                       </button>
-                      <div className="flex-1 min-w-0">
-                        <ExerciseCard exercise={ex} onClick={() => {}} />
+                      <div className="flex-1 min-w-0 [&>button]:mb-0">
+                        <ExerciseCard exercise={ex} onClick={() => openSearch(key)} />
                       </div>
-                      <button onClick={() => step(i, j, 1)} disabled={!canStep} className={sideBtn} aria-label="Next exercise">
-                        <ChevronRight size={18} />
-                      </button>
-                      <button
-                        onClick={() => openSearch(key)}
-                        className={`${sideBtn} ${searchKey === key ? 'text-white border-[#c0392b]/50' : ''}`}
-                        aria-label="Search exercises"
-                      >
-                        <Search size={16} />
+                      <button onClick={() => step(i, j, 1)} disabled={!canStep} className={roundBtn} aria-label="Next exercise">
+                        <ChevronRight size={20} />
                       </button>
                     </div>
 
-                    {canStep && (
-                      <p className="text-[10px] uppercase tracking-widest text-white/40 -mt-1 mb-2 text-center">
-                        {pos} of {opts.length}
-                      </p>
-                    )}
+                    <div className="flex items-center justify-center gap-3 h-8">
+                      {canStep && <span className="text-[13px] text-label-3 tabular-nums">{pos} of {opts.length}</span>}
+                      <button onClick={() => openSearch(key)} className="h-8 flex items-center gap-1 text-[13px] text-accent">
+                        <Search size={13} /> Search
+                      </button>
+                    </div>
 
                     {searchKey === key && (
-                      <div className="border border-white/10 p-3 mb-3">
+                      <div className="rounded-2xl bg-surface p-3 mb-3">
                         <div className="flex items-center gap-2 mb-2">
-                          <input
-                            autoFocus
-                            value={query}
-                            onChange={e => setQuery(e.target.value)}
-                            placeholder="Search any exercise..."
-                            className="flex-1 min-w-0 h-11 bg-white/5 border border-white/10 px-3 text-base text-white placeholder-white/30 outline-none focus:border-white/30"
-                          />
-                          <button onClick={() => setSearchKey(null)} className="w-11 h-11 flex items-center justify-center text-white/60" aria-label="Close search">
-                            <X size={18} />
-                          </button>
+                          <div className="flex-1 min-w-0 h-10 rounded-xl bg-surface-2 flex items-center gap-2 px-3">
+                            <Search size={16} className="text-label-3 shrink-0" />
+                            <input
+                              autoFocus
+                              value={query}
+                              onChange={e => setQuery(e.target.value)}
+                              placeholder="Search any exercise"
+                              className="flex-1 min-w-0 bg-transparent text-[17px] text-label outline-none"
+                            />
+                          </div>
+                          <button onClick={() => setSearchKey(null)} className="h-11 px-2 text-[17px] text-accent">Cancel</button>
                         </div>
                         {!allExercises ? (
-                          <p className="text-xs text-white/40 p-2">Loading...</p>
+                          <p className="text-[15px] text-label-3 p-2">Loading...</p>
                         ) : (
-                          <div className="flex flex-col max-h-60 overflow-y-auto">
+                          <div className="flex flex-col max-h-60 overflow-y-auto divide-y divide-separator">
                             {searchResults(i).map(r => (
                               <button
                                 key={r.id}
                                 onClick={() => { replaceExercise(i, j, r); setSearchKey(null) }}
-                                className="min-h-12 px-2 py-2 text-left text-sm uppercase tracking-widest text-white/80 hover:bg-white/5 border-b border-white/5"
+                                className="min-h-12 px-2 py-2 text-left active:bg-surface-2"
                               >
-                                {r.name}
-                                <span className="text-white/40"> · {formatMuscle(r.target)}</span>
+                                <span className="block text-[17px] text-label">{r.name}</span>
+                                <span className="block text-[13px] text-label-3">{formatMuscle(r.target)}</span>
                               </button>
                             ))}
                             {searchResults(i).length === 0 && (
-                              <p className="text-xs text-white/40 p-2">No matches</p>
+                              <p className="text-[15px] text-label-3 p-2">No matches</p>
                             )}
                           </div>
                         )}
@@ -328,49 +323,41 @@ export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
           ))}
 
           {hasExercises && (
-            <div className="flex flex-col gap-2 mt-2">
+            <div className="flex flex-col gap-3 mt-2">
               <button
                 onClick={startWorkout}
-                className="h-16 bg-[#c0392b] text-white text-2xl tracking-widest hover:bg-[#a93226] transition-colors"
-                style={{ fontFamily: 'Bebas Neue' }}
+                className="h-[52px] rounded-xl bg-accent-fill text-on-accent text-[17px] font-semibold active:opacity-80"
               >
                 {draft ? 'Resume current workout' : 'Start workout'}
               </button>
 
               {user ? (
-                <div className="flex gap-2">
+                <div className="rounded-xl bg-surface flex items-center gap-2 pl-4 pr-1.5 h-[52px]">
                   <input
                     value={workoutName}
                     onChange={e => { setWorkoutName(e.target.value); setSaveMsg(null) }}
                     placeholder={defaultName()}
                     maxLength={100}
                     aria-label="Workout name"
-                    className="flex-1 min-w-0 h-12 bg-white/5 border border-white/15 px-3 text-base text-white placeholder-white/30 outline-none focus:border-white/40"
+                    className="flex-1 min-w-0 bg-transparent text-[17px] text-label outline-none"
                   />
                   <button
                     onClick={saveWorkout}
                     disabled={saving || saveMsg?.ok}
-                    className="h-12 px-4 border border-white/60 text-white text-xs font-bold uppercase tracking-widest disabled:opacity-40"
+                    className="h-10 px-4 rounded-lg bg-surface-2 text-accent text-[15px] font-semibold disabled:opacity-40"
                   >
-                    {saving ? 'Saving...' : 'Save for later'}
+                    {saving ? 'Saving...' : saveMsg?.ok ? 'Saved' : 'Save'}
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={onSignIn}
-                  className="h-12 border border-white/60 text-white text-xs font-bold uppercase tracking-widest"
-                >
-                  Sign in to save for later
+                <button onClick={onSignIn} className="h-11 text-[15px] text-accent">
+                  Sign in to save this workout for later
                 </button>
               )}
-              {saveMsg && (
-                <p className={`text-xs uppercase tracking-widest ${saveMsg.ok ? 'text-white/60' : 'text-[#c0392b]'}`}>
-                  {saveMsg.text}
-                </p>
-              )}
+              {saveMsg && !saveMsg.ok && <p className="text-[13px] text-danger px-1">{saveMsg.text}</p>}
             </div>
           )}
-        </div>
+        </section>
       )}
     </div>
   )
