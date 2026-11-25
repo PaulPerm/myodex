@@ -1,4 +1,4 @@
-from sqlalchemy import String, ForeignKey, DateTime, func, Numeric, SmallInteger, Text
+from sqlalchemy import String, ForeignKey, DateTime, func, Numeric, SmallInteger, Text, Boolean
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
@@ -14,13 +14,26 @@ class Muscle(Base):
 
 class Exercise(Base):
     __tablename__ = "exercises"
-
     id: Mapped[int] = mapped_column(primary_key = True)
     name: Mapped[str] = mapped_column(String(100))
     difficulty: Mapped[str] = mapped_column(String(20))
     category: Mapped[str] = mapped_column(String(20), index=True)
-    target: Mapped[str] = mapped_column(ForeignKey("muscles.slug"), index = True) 
-    secondary: Mapped[list[str]] = mapped_column(ARRAY(String(50)), default = list) 
+    target: Mapped[str] = mapped_column(ForeignKey("muscles.slug"), index = True)
+    secondary: Mapped[list[str]] = mapped_column(ARRAY(String(50)), default = list)
+
+    # from free-exercise-db (null on the original 112)
+    mechanic: Mapped[str | None] = mapped_column(String(20))      # compound / isolation
+    force: Mapped[str | None] = mapped_column(String(20))         # push / pull / static
+    equipment: Mapped[str | None] = mapped_column(String(30))
+    instructions: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    images: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    source: Mapped[str] = mapped_column(String(30), server_default="myodex", index=True)
+    external_id: Mapped[str | None] = mapped_column(String(100))
+
+    # generator labels, filled in later
+    pattern: Mapped[str | None] = mapped_column(String(30))
+    tier: Mapped[int | None] = mapped_column(SmallInteger)
+    fatigue: Mapped[int | None] = mapped_column(SmallInteger)
 
 class GoalPreset(Base):
     __tablename__ = "goal_presets"
@@ -32,7 +45,7 @@ class GoalPreset(Base):
 
 class User(Base):
     __tablename__ = "users"
-
+    
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
