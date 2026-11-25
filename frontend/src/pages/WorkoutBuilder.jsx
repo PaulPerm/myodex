@@ -51,7 +51,7 @@ export default function WorkoutBuilder({ onBack, onStarted, onSignIn }) {
   async function loadPools(muscles) {
     const entries = await Promise.all(muscles.map(async m => {
       try {
-        const res = await fetch(`${API_URL}/muscles/${m}/exercises`)
+        const res = await fetch(`${API_URL}/muscles/${m}/exercises?curated=true`)
         const json = await res.json()
         return [m, json.primary || []]
       } catch {

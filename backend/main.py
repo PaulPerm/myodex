@@ -14,10 +14,15 @@ from seed import seed_if_empty
 from auth import router as auth_router
 from saved_workouts import router as saved_workouts_router
 from sessions import router as sessions_router
+from import_exercises import import_free_exercise_db
+
+CURATED = "myodex"  # source tag for the hand-picked 112
+
 
 @asynccontextmanager
 async def lifespan(app):
     seed_if_empty()  # runs once on startup
+    import_free_exercise_db()
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -33,17 +38,26 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(saved_workouts_router)
 app.include_router(sessions_router)
+
 # ── Helpers ─────────────────────────────────────────────────────────────
 
-def exercise_dict(e: Exercise):
-    return {
+def exercise_dict(e: Exercise, full: bool = False):
+    d = {
         "id": e.id,
         "name": e.name,
         "difficulty": e.difficulty,
         "category": e.category,
         "target": e.target,
         "secondary": list(e.secondary),
+        "equipment": e.equipment,
+        "mechanic": e.mechanic,
+        "curated": e.source == CURATED,
     }
+    if full:  # heavy fields only on the single-exercise endpoint
+        d["force"] = e.force
+        d["instructions"] = list(e.instructions or [])
+        d["images"] = list(e.images or [])
+    return d
 
 
 def preset_dict(p: GoalPreset):
@@ -55,19 +69,25 @@ def get_preset(db: Session, goal: str):
     return preset_dict(preset)
 
 
-def get_exercises_for_muscle(db: Session, muscle_name: str):
+def base_query(curated_only: bool):
+    # curated exercises first, then the rest
+    q = select(Exercise).order_by(Exercise.source != CURATED, Exercise.id)
+    if curated_only:
+        q = q.where(Exercise.source == CURATED)
+    return q
+
+
+def get_exercises_for_muscle(db: Session, muscle_name: str, curated_only: bool = False):
     muscle = muscle_name.lower()
-    primary = db.scalars(
-        select(Exercise).where(Exercise.target == muscle).order_by(Exercise.id)
-    ).all()
-    secondary = db.scalars(
-        select(Exercise).where(Exercise.secondary.any(muscle)).order_by(Exercise.id)
-    ).all()
+    q = base_query(curated_only)
+    primary = db.scalars(q.where(Exercise.target == muscle)).all()
+    secondary = db.scalars(q.where(Exercise.secondary.any(muscle))).all()
     return [exercise_dict(e) for e in primary], [exercise_dict(e) for e in secondary]
 
 
 def filter_pool(db: Session, muscle: str, categories: List[str], exclude: set):
-    primary, _ = get_exercises_for_muscle(db, muscle)
+    # generator + swap stick to the curated list so random picks stay sensible
+    primary, _ = get_exercises_for_muscle(db, muscle, curated_only=True)
     return [
         e for e in primary
         if (not categories or e["category"] in categories)
@@ -137,9 +157,10 @@ def get_exercises_by_muscle(
     muscle_name: str,
     goal: str = "hypertrophy",
     category: str | None = None,
+    curated: bool = False,
     db: Session = Depends(get_db),
 ):
-    primary, secondary = get_exercises_for_muscle(db, muscle_name)
+    primary, secondary = get_exercises_for_muscle(db, muscle_name, curated_only=curated)
 
     if category:
         primary = [e for e in primary if e["category"] == category]
@@ -158,11 +179,20 @@ def get_exercises_by_muscle(
 def get_all_exercises(
     category: str | None = None,
     difficulty: str | None = None,
+    curated: bool = False,
     db: Session = Depends(get_db),
 ):
-    query = select(Exercise).order_by(Exercise.id)
+    query = base_query(curated)
     if category:
         query = query.where(Exercise.category == category)
     if difficulty:
         query = query.where(Exercise.difficulty == difficulty)
     return [exercise_dict(e) for e in db.scalars(query)]
+
+
+@app.get("/exercises/{exercise_id}")
+def get_exercise(exercise_id: int, db: Session = Depends(get_db)):
+    e = db.get(Exercise, exercise_id)
+    if not e:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+    return exercise_dict(e, full=True)
